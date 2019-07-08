@@ -76,6 +76,8 @@ func (l *LuaRobot) Reload() {
 
 	l.Logf("初始化 Lua 环境...")
 
+	os.Setenv(lua.LuaPath, "lua/?.lua;;")
+
 	luaRobot.lstate = lua.NewState()
 
 	luaRobot.lstate.SetGlobal("RegEx", luaRobot.lstate.NewFunction(luaRobot.RegEx))
@@ -94,7 +96,6 @@ func (l *LuaRobot) Reload() {
 		return
 	}
 
-	os.Setenv(lua.LuaPath, "lua/?.lua;;")
 	if err := luaRobot.lstate.DoFile("lua/main.lua"); err != nil {
 		luaRobot.Panic(err)
 		return
