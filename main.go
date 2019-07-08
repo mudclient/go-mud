@@ -65,10 +65,12 @@ func (t *Timer) Emit(l *LuaRobot) {
 
 func initLua() {
 	luaRobot = &LuaRobot{}
-	luaRobot.Reload()
+	if err := luaRobot.Reload(); err != nil {
+		panic(err)
+	}
 }
 
-func (l *LuaRobot) Reload() {
+func (l *LuaRobot) Reload() error {
 	if luaRobot.lstate != nil {
 		luaRobot.lstate.Close()
 		l.Logf("Lua 环境已关闭。")
@@ -97,8 +99,7 @@ func (l *LuaRobot) Reload() {
 	}
 
 	if err := luaRobot.lstate.DoFile("lua/main.lua"); err != nil {
-		luaRobot.Panic(err)
-		return
+		return err
 	}
 
 	luaRobot.onReceive = lua.P{
@@ -114,6 +115,8 @@ func (l *LuaRobot) Reload() {
 	}
 
 	l.Logf("Lua 环境初始化完成。")
+
+	return nil
 }
 
 func (l *LuaRobot) OnReceive(raw, input string) {
@@ -431,6 +434,8 @@ func main() {
 			}
 			return event
 		})
+
+	defer app.Stop()
 
 	if err := app.Run(); err != nil {
 		panic(err)
