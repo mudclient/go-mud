@@ -355,7 +355,9 @@ func main() {
 				log.Print("程序已退出。")
 				return
 			} else if cmd == "lua.reload" {
+				cmdLine.SetText("")
 				luaRobot.Reload()
+				return
 			} else if strings.HasPrefix(cmd, `'`) {
 				// 北侠默认支持单引号自动变成 say 命令效果
 			} else if strings.HasPrefix(cmd, `"`) {
@@ -369,9 +371,9 @@ func main() {
 			if cmd != "" {
 				cmdLine.SetText("")
 				fmt.Fprintln(mainWindow, cmd)
-				cmd = UTF8_TO_GBK(cmd)
 				needSend := luaRobot.OnSend(cmd)
 				if needSend {
+					cmd = UTF8_TO_GBK(cmd)
 					fmt.Fprintln(output, cmd)
 				}
 			}
