@@ -1,0 +1,13 @@
+{
+    "UI": {
+        "AmbiguousWidth": "auto"
+    },
+    "Mud": {
+        "Host": "mud.pkuxkx.net",
+        "Port": 8080
+    },
+    "Lua": {
+        "Enable": true,
+        "Path": "lua"
+    }
+}
