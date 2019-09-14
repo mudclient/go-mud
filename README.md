@@ -43,8 +43,7 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 
 ### 运行环境
 
-* GoMud 可在 Linux 及 macOS 上运行。运行时不依赖其它软件。
-* GoMud 也可以在 Windows 下运行，但需要依赖 [Windows 下的运行环境](https://github.com/dzpao/go-mud/releases/tag/fake-tag-for-windows-runtime)。
+* GoMud 可在 Linux、macOS 及 Windows 上运行。运行时不依赖其它软件。
 * 通过 [Termux](https://termux.com/) 的帮助，GoMud 也可以在安卓下运行。
 
 ### 通过源码安装
