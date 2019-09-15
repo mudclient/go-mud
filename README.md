@@ -26,9 +26,11 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 
 **GoMud 目前仍在开发当中，并不完善。** 但已经能够提供必要的功能来连接 MUD 服务器。且有许多亮点：
 
-* [X] 原生支持 UTF-8
+* [X] 全程使用 UTF-8，天生免疫乱码
+* [X] 支持运行有 GB2312/GBK/GB18030/BIG5/UTF-16/UTF-8 编码的 MUD 服务器
 * [X] 纯文本界面，通过命令行和快捷键来操作
 * [X] 支持 macOS、Linux、Windows、安卓四大平台
+* [X] 支持**路由器**、**树莓派**、**群晖**、**电视机**等小众平台
 * [X] 支持 32 位和 64 位操作系统
 * [X] 支持 [Lua 机器人](https://github.com/dzpao/lua-mud-robots)
 
@@ -44,7 +46,8 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 ### 运行环境
 
 * GoMud 可在 Linux、macOS 及 Windows 上运行。运行时不依赖其它软件。
-* 通过 [Termux](https://termux.com/) 的帮助，GoMud 也可以在安卓下运行。
+* 通过 [Termux](https://termux.com/) 的帮助，GoMud 也可以在安卓下运行。你可以在运行安卓系统的手机或者电视机上使用 GoMud。
+* GoMud 也可以在群晖 NAS、运行有 OpenWRT 等 Linux 系统的智能路由器，或者树莓派上运行。
 
 ### 通过源码安装
 
