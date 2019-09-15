@@ -9,7 +9,7 @@ ALL=go-mud-macOS-amd64      \
 
 all: $(patsubst %,dist/%,$(ALL))
 
-GOOPTS=-trimpath
+GOOPTS=-ldflags="-s -w" -trimpath
 
 SRCS=main.go
 
