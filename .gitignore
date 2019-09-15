@@ -1,1 +1,10 @@
 go-mud*
+dist/
+config.yaml
+config.json
+log/*
+out*
+*.log
+tmp/*
+
+.DS_Store
