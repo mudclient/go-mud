@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"runtime"
 	"strings"
 
 	"github.com/flw-cn/printer"
@@ -27,7 +28,9 @@ func NewUI(config UIConfig) *UI {
 	}
 }
 
-func (ui *UI) Create() {
+func (ui *UI) Create(title string) {
+	InitConsole(title)
+
 	ui.app = tview.NewApplication()
 	ui.mainWindow = NewTextView().
 		SetDynamicColors(true).
@@ -81,6 +84,11 @@ func (ui *UI) Create() {
 	mainFrame := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(ui.mainWindow, 0, 1, false).
 		AddItem(cmdLine, 1, 1, false)
+
+	if runtime.GOOS == "windows" {
+		imStatusLine := tview.NewBox()
+		mainFrame.AddItem(imStatusLine, 1, 1, false)
+	}
 
 	ui.app.SetRoot(mainFrame, true).
 		SetFocus(cmdLine).

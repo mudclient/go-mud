@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"runtime"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/dzpao/go-mud/mud"
 	"github.com/dzpao/go-mud/ui"
 	smartConfig "github.com/flw-cn/go-smartConfig"
+	"github.com/spf13/cobra"
 	"golang.org/x/text/width"
 )
 
@@ -28,6 +30,7 @@ type Client struct {
 }
 
 func main() {
+	cobra.MousetrapHelpText = "" // 允许在 Windows(R) 下直接双击运行
 	config := ClientConfig{}
 	smartConfig.LoadConfig("go-mud", "0.6", &config)
 	client := NewClient(config)
@@ -47,7 +50,9 @@ func NewClient(config ClientConfig) *Client {
 func (c *Client) Run() {
 	ansiRe := regexp.MustCompile("\x1b" + `\[\d*(?:;\d*(?:;\d*)?)?(?:A|D|K|m)`)
 
-	c.ui.Create()
+	title := fmt.Sprintf("GoMud v0.6.1 beta, server = %s:%d",
+		c.config.Mud.Host, c.config.Mud.Port)
+	c.ui.Create(title)
 	go c.ui.Run()
 	c.lua.SetScreen(c.ui)
 	c.lua.SetMud(c.mud)
