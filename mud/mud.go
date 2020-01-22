@@ -2,7 +2,6 @@ package mud
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -53,8 +52,8 @@ func NewMudServer(config MudConfig) *MudServer {
 	return mud
 }
 
-func (mud *MudServer) SetScreen(w io.Writer) {
-	mud.screen.SetOutput(w)
+func (mud *MudServer) SetScreen(w printer.Printer) {
+	mud.screen = w
 }
 
 func (mud *MudServer) Run() {
