@@ -7,10 +7,12 @@ import (
 	"strings"
 	"time"
 
-	lua "github.com/dzpao/go-mud/lua-api"
+	"github.com/dzpao/go-mud/app"
+	"github.com/dzpao/go-mud/lua-api"
 	"github.com/dzpao/go-mud/mud"
 	"github.com/dzpao/go-mud/ui"
-	smartConfig "github.com/flw-cn/go-smartConfig"
+
+	"github.com/flw-cn/go-smartConfig"
 	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
@@ -34,7 +36,9 @@ type Client struct {
 func main() {
 	cobra.MousetrapHelpText = "" // 允许在 Windows(R) 下直接双击运行
 	config := ClientConfig{}
-	smartConfig.LoadConfig("go-mud", "0.6", &config)
+	smartConfig.VersionDetail = app.VersionDetail()
+	smartConfig.LoadConfig(app.AppName, app.Version, &config)
+
 	client := NewClient(config)
 	client.Run()
 }
@@ -52,7 +56,8 @@ func NewClient(config ClientConfig) *Client {
 func (c *Client) Run() {
 	ansiRe := regexp.MustCompile("\x1b" + `\[\d*(?:;\d*(?:;\d*)?)?(?:A|D|K|m)`)
 
-	title := fmt.Sprintf("GoMud v0.6.1 beta, server = %s:%d",
+	title := fmt.Sprintf("%s(%s), server = %s:%d",
+		app.AppName, app.Version,
 		c.config.Mud.Host, c.config.Mud.Port)
 	c.ui.Create(title)
 	go c.ui.Run()
@@ -103,6 +108,9 @@ var debug bool
 func (c *Client) DoCmd(cmd string) {
 	if cmd == "exit" || cmd == "quit" {
 		c.quit <- true
+		return
+	} else if cmd == "/version" {
+		c.ui.Print(app.VersionDetail())
 		return
 	} else if cmd == "/reload-lua" {
 		c.lua.Reload()

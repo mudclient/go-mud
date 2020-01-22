@@ -7,4 +7,6 @@ out*
 *.log
 tmp/*
 
+app/version.go
+
 .DS_Store
