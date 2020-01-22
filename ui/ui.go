@@ -40,6 +40,12 @@ type UI struct {
 	input chan string
 }
 
+func init() {
+	tcell.ColorValues[tcell.ColorYellow] = 0xC7C400
+	tcell.ColorValues[tcell.ColorWhite] = 0xC7C7C7
+	tcell.ColorValues[tcell.ColorGreen] = 0x00C200
+}
+
 func NewUI(config UIConfig) *UI {
 	return &UI{
 		config: config,
