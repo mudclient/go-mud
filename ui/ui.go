@@ -18,7 +18,7 @@ type UI struct {
 
 	config     UIConfig
 	app        *tview.Application
-	mainWindow *TextView
+	mainWindow *tview.TextView
 	input      chan string
 }
 
@@ -32,14 +32,14 @@ func (ui *UI) Create(title string) {
 	InitConsole(title)
 
 	ui.app = tview.NewApplication()
-	ui.mainWindow = NewTextView().
+	ui.mainWindow = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetChangedFunc(func() {
 			ui.app.Draw()
 		})
 
-	ui.SetOutput(ANSIWriter(ui.mainWindow))
+	ui.SetOutput(tview.ANSIWriter(ui.mainWindow))
 
 	cmdLine := tview.NewInputField().
 		SetFieldBackgroundColor(tcell.ColorBlack).
