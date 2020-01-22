@@ -70,7 +70,7 @@ func (mud *MudServer) Run() {
 		return
 	}
 
-	mud.Println("连接成功。")
+	mud.screen.Println("连接成功。")
 
 	netWriter := encoder.NewWriter(mud.conn)
 	mud.server.SetOutput(netWriter)
@@ -126,7 +126,10 @@ func (mud *MudServer) telnetNegotiate(m IACMessage) {
 	} else if m.Command == DO {
 		mud.conn.Write([]byte{IAC, WONT, m.Args[0]})
 	} else if m.Command == GA {
-		mud.input <- "IAC GA"
+		// FIXME: 接收到 GA 后，应当强制完成当前的不完整的行。
+		// TODO: 更进一步地，应当在 GA 收到前，阻止用户发送命令。
+		//       为了不影响用户体验，可以允许输入，但不允许回车发送，等到收到 GA 后再发送。
+		// TODO: 此功能应当仅当 GA 可用时打开，且允许用户通过配置文件关闭。
 	}
 	// TODO: IAC 不继续传递给 UI
 	if mud.config.IACDebug {
