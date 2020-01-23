@@ -1,0 +1,29 @@
+# vim: set softtabstop=2 tabstop=2 shiftwidth=2:
+name: Release
+on:
+    create:
+        tags:
+          - v*
+
+jobs:
+    release:
+        name: Release on GitHub
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check out code
+            uses: actions/checkout@v1
+
+          - name: Set env via git describe
+            run: echo ::set-env name=GIT_DESCRIBE::$(git describe --always --tags --dirty)
+
+          - name: Validates Goreleaser config
+            uses: docker://goreleaser/goreleaser:latest
+            with:
+                args: check
+
+          - name: Create release on GitHub
+            uses: docker://goreleaser/goreleaser:latest
+            with:
+                args: release
+            env:
+                GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
