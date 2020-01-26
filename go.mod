@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394
-	github.com/flw-cn/go-smartConfig v0.0.0-20180626072421-57f9030d870b
+	github.com/flw-cn/go-smartConfig v1.0.0
 	github.com/flw-cn/printer v0.0.0-20190906044932-ecdb12812e08
 	github.com/gdamore/tcell v1.3.0
 	github.com/mattn/go-runewidth v0.0.4
