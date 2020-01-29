@@ -67,3 +67,16 @@ changelog:
           - typo
           - Merge pull request
           - Merge branch
+
+brews:
+  - github:
+        owner: dzpao
+        name: homebrew-go-mud
+    commit_author:
+        name: goreleaserbot
+        email: goreleaser@carlosbecker.com
+    description: "一个用 Go 语言开发的 MUD 客户端"
+    homepage: "https://github.com/dzpao/go-mud"
+    skip_upload: false
+    install: |
+        bin.install "go-mud"
