@@ -1,4 +1,4 @@
-module github.com/dzpao/go-mud
+module github.com/mudclient/go-mud
 
 go 1.13
 

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dzpao/go-mud/app"
-	"github.com/dzpao/go-mud/lua-api"
-	"github.com/dzpao/go-mud/mud"
-	"github.com/dzpao/go-mud/ui"
+	"github.com/mudclient/go-mud/app"
+	"github.com/mudclient/go-mud/lua-api"
+	"github.com/mudclient/go-mud/mud"
+	"github.com/mudclient/go-mud/ui"
 
 	"github.com/flw-cn/go-smartConfig"
 	"github.com/mattn/go-runewidth"

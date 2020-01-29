@@ -1,4 +1,24 @@
-# go-mud —— Go 语言写的 MUD 客户端
+<p align="center">
+    <h3 align="center">GoMud</h3>
+    <p align="center">Go 语言写的，支持 UTF-8 的中文 MUD 客户端</p>
+    <p align="center">
+        <a href="#如何使用-gomud">如何使用</a> •
+        <a href="#安装指南">如何安装</a> •
+        <a href="#配置-gomud">如何配置</a> •
+        <a href="https://github.com/mudclient/go-mud/wiki/FAQ">常见问题</a>
+    </p>
+    <p align="center">
+<a href="https://github.com/mudclient/go-mud/releases/latest">
+<img alt="最新版本" src="https://img.shields.io/github/v/release/mudclient/go-mud.svg?logo=github&style=flat-square">
+</a>
+<a href="https://github.com/mudclient/go-mud/actions?workflow=Release">
+<img alt="Release workflow" src="https://github.com/mudclient/go-mud/workflows/Release/badge.svg">
+</a>
+<a href="https://github.com/mudclient/go-mud/actions?workflow=Build">
+<img alt="Build workflow" src="https://github.com/mudclient/go-mud/workflows/Build/badge.svg">
+</a>
+    </p>
+</p>
 
 本项目实现目标是一个 MUD 客户端，主要采用 Go 语言实现。
 
@@ -51,7 +71,7 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 
 ### 安装指南
 
-本项目的[发布页面](https://github.com/dzpao/go-mud/releases)
+本项目的[发布页面](https://github.com/mudclient/go-mud/releases)
 中包含了所有支持平台的预编译安装包，你可以根据自己的需要选择下载。
 
 #### macOS 快速安装
@@ -59,7 +79,7 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 macOS 用户推荐使用 [Homebrew](https://brew.sh) 来安装。如果你没用过它，不如趁此机会安装体验一下。
 
 ```sh
-brew tap dzpao/go-mud
+brew tap mudclient/tap
 brew install go-mud
 ```
 
@@ -68,7 +88,7 @@ brew install go-mud
 运行了安卓系统的手机、平板电脑、电视机通过 Termux 也可以使用 GoMud，安装方法如下：
 
 ```sh
-wget https://github.com/dzpao/go-mud/releases/download/v0.6.1/go-mud_v0.6.1_Termux_ARMv7.deb
+wget https://github.com/mudclient/go-mud/releases/download/v0.6.1/go-mud_v0.6.1_Termux_ARMv7.deb
 apt install ./go-mud_v0.6.1_Termux_ARMv7.deb
 ```
 
@@ -81,7 +101,7 @@ apt install ./go-mud_v0.6.1_Termux_ARMv7.deb
 本项目的发布页面中包含了所有支持平台的预编译可执行文件。
 各平台的可执行文件名称略有不同，你可以下载和你的运行环境相对应的版本。
 GoMud 支持的平台非常丰富，限于篇幅，此处不再赘述。
-更多内容请查看[支持平台与安装指南](https://github.com/dzpao/go-mud/wiki/支持平台与安装指南)。
+更多内容请查看[支持平台与安装指南](https://github.com/mudclient/go-mud/wiki/支持平台与安装指南)。
 
 #### 通过源码安装
 
@@ -89,7 +109,7 @@ GoMud 采用 Go 语言实现，如果你要通过源码安装，则需要自行�
 推荐使用 Go 1.13 或以上的版本。Golang 安装完毕后，通过如下 `go get` 命令即可安装：
 
 ```
-go get -u github.com/dzpao/go-mud
+go get -u github.com/mudclient/go-mud
 ```
 
 ### 启动并进入北侠
@@ -134,7 +154,7 @@ Flags:
 
 配置文件同时支持 [YAML](https://yaml.org/) 和 [JSON](https://json.org/) 两种格式，
 两种配置文件效果是一样的，用户可根据个人偏好选择使用，下面分别给出示例。
-配置项的说明参见[配置与运行](https://github.com/dzpao/go-mud/wiki/配置与运行)。
+配置项的说明参见[配置与运行](https://github.com/mudclient/go-mud/wiki/配置与运行)。
 
 #### config.yaml 示例
 
@@ -186,5 +206,5 @@ GoMud 也可支持通过 Docker 来运行，推荐使用 Docker 来挂机。
 ## 如何贡献
 
 * 体验并向周围的人分享你的体验结果
-* 通过[提交 issue](https://github.com/dzpao/go-mud/issues/new) 来反馈意见
+* 通过[提交 issue](https://github.com/mudclient/go-mud/issues/new) 来反馈意见
 * 通过 PR 来贡献代码，贡献代码时请先阅读[贡献指南](CONTRIBUTING.md)

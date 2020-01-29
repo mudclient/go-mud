@@ -1,7 +1,7 @@
 {
     "name": "go-mud",
     "version": "VAR-VERSION",
-    "homepage": "https://github.com/dzpao/go-mud",
+    "homepage": "https://github.com/mudclient/go-mud",
     "maintainer": "@dzpao",
     "description": "A mud client written in Go",
     "arch": "arm",
