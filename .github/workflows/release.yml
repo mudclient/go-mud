@@ -10,6 +10,11 @@ jobs:
         name: Release on GitHub
         runs-on: ubuntu-latest
         steps:
+          - name: Set up Go
+            uses: actions/setup-go@v1
+            with:
+              go-version: 1.13.6
+
           - name: Check out code
             uses: actions/checkout@v1
 
@@ -17,13 +22,29 @@ jobs:
             run: echo ::set-env name=GIT_DESCRIBE::$(git describe --always --tags --dirty)
 
           - name: Validates Goreleaser config
-            uses: docker://goreleaser/goreleaser:latest
+            uses: goreleaser/goreleaser-action@v1
             with:
                 args: check
 
+          - name: Set up Python ${{ matrix.python-version }}
+            uses: actions/setup-python@v1
+            with:
+              python-version: ${{ matrix.python-version }}
+
+          - name: Install termux-create-package
+            run: pip3 install termux-create-package
+
+          - name: Install jq
+            run: sudo apt-get install jq
+
           - name: Create release on GitHub
-            uses: docker://goreleaser/goreleaser:latest
+            uses: goreleaser/goreleaser-action@v1
             with:
                 args: release
             env:
                 GITHUB_TOKEN: ${{secrets.GORELEASER_GITHUB_TOKEN}}
+
+          - name: Upload termux package to GitHub
+            run: bash build/termux-build.sh
+            env:
+                GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
