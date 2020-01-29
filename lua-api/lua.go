@@ -21,11 +21,9 @@ type LuaRobotConfig struct {
 }
 
 type LuaRobot struct {
-	printer.SimplePrinter
-
 	config LuaRobotConfig
 
-	screen io.Writer
+	screen printer.Printer
 	mud    io.Writer
 
 	lstate    *lua.LState
@@ -38,7 +36,7 @@ type LuaRobot struct {
 func NewLuaRobot(config LuaRobotConfig) *LuaRobot {
 	return &LuaRobot{
 		config: config,
-		screen: os.Stdout,
+		screen: printer.NewSimplePrinter(os.Stdout),
 	}
 }
 
@@ -48,14 +46,13 @@ func (l *LuaRobot) Init() {
 	}
 
 	if err := l.Reload(); err != nil {
-		l.Println("Lua 初始化失败。")
+		l.screen.Println("Lua 初始化失败。")
 		return
 	}
 }
 
-func (l *LuaRobot) SetScreen(w io.Writer) {
+func (l *LuaRobot) SetScreen(w printer.Printer) {
 	l.screen = w
-	l.SetOutput(w)
 }
 
 func (l *LuaRobot) SetMud(w io.Writer) {
@@ -65,32 +62,32 @@ func (l *LuaRobot) SetMud(w io.Writer) {
 func (l *LuaRobot) Reload() error {
 	mainFile := path.Join(l.config.Path, "main.lua")
 	if _, err := os.Open(mainFile); err != nil {
-		l.Printf("Load error: %s\n", err)
-		l.Println("无法打开 lua 主程序，请检查你的配置。")
+		l.screen.Printf("Load error: %s\n", err)
+		l.screen.Println("无法打开 lua 主程序，请检查你的配置。")
 		return err
 	}
 
 	if l.lstate != nil {
 		l.lstate.Close()
-		l.Println("Lua 环境已关闭。")
+		l.screen.Println("Lua 环境已关闭。")
 	}
 
-	l.Println("初始化 Lua 环境...")
+	l.screen.Println("初始化 Lua 环境...")
 
 	luaPath := path.Join(l.config.Path, "?.lua")
 	os.Setenv(lua.LuaPath, luaPath+";;")
 
 	l.lstate = lua.NewState()
 
-	l.lstate.SetGlobal("RegEx", l.lstate.NewFunction(l.RegEx))
-	l.lstate.SetGlobal("Echo", l.lstate.NewFunction(l.Echo))
-	l.lstate.SetGlobal("Print", l.lstate.NewFunction(l.Print))
-	l.lstate.SetGlobal("Run", l.lstate.NewFunction(l.Run))
-	l.lstate.SetGlobal("Send", l.lstate.NewFunction(l.Send))
-	l.lstate.SetGlobal("AddTimer", l.lstate.NewFunction(l.AddTimer))
-	l.lstate.SetGlobal("AddMSTimer", l.lstate.NewFunction(l.AddTimer))
-	l.lstate.SetGlobal("DelTimer", l.lstate.NewFunction(l.DelTimer))
-	l.lstate.SetGlobal("DelMSTimer", l.lstate.NewFunction(l.DelTimer))
+	l.lstate.SetGlobal("RegEx", l.lstate.NewFunction(l.LuaRegEx))
+	l.lstate.SetGlobal("Echo", l.lstate.NewFunction(l.LuaEcho))
+	l.lstate.SetGlobal("Print", l.lstate.NewFunction(l.LuaPrint))
+	l.lstate.SetGlobal("Run", l.lstate.NewFunction(l.LuaRun))
+	l.lstate.SetGlobal("Send", l.lstate.NewFunction(l.LuaSend))
+	l.lstate.SetGlobal("AddTimer", l.lstate.NewFunction(l.LuaAddTimer))
+	l.lstate.SetGlobal("AddMSTimer", l.lstate.NewFunction(l.LuaAddTimer))
+	l.lstate.SetGlobal("DelTimer", l.lstate.NewFunction(l.LuaDelTimer))
+	l.lstate.SetGlobal("DelMSTimer", l.lstate.NewFunction(l.LuaDelTimer))
 
 	l.lstate.Panic = func(*lua.LState) {
 		l.Panic(errors.New("LUA Panic"))
@@ -115,7 +112,7 @@ func (l *LuaRobot) Reload() error {
 		Protect: true,
 	}
 
-	l.Println("Lua 环境初始化完成。")
+	l.screen.Println("Lua 环境初始化完成。")
 
 	return nil
 }
@@ -154,10 +151,10 @@ func (l *LuaRobot) OnSend(cmd string) bool {
 }
 
 func (l *LuaRobot) Panic(err error) {
-	l.Printf("Lua error: [%v]\n", err)
+	l.screen.Printf("Lua error: [%v]\n", err)
 }
 
-func (l *LuaRobot) RegEx(L *lua.LState) int {
+func (l *LuaRobot) LuaRegEx(L *lua.LState) int {
 	text := L.ToString(1)
 	regex := L.ToString(2)
 
@@ -189,13 +186,13 @@ func (l *LuaRobot) RegEx(L *lua.LState) int {
 	return length
 }
 
-func (l *LuaRobot) Print(L *lua.LState) int {
+func (l *LuaRobot) LuaPrint(L *lua.LState) int {
 	text := L.ToString(1)
-	l.Println(text)
+	l.screen.Println(text)
 	return 0
 }
 
-func (l *LuaRobot) Echo(L *lua.LState) int {
+func (l *LuaRobot) LuaEcho(L *lua.LState) int {
 	text := L.ToString(1)
 
 	re := regexp.MustCompile(`\$(BLK|NOR|RED|HIR|GRN|HIG|YEL|HIY|BLU|HIB|MAG|HIM|CYN|HIC|WHT|HIW|BNK|REV|U)\$`)
@@ -240,12 +237,12 @@ func (l *LuaRobot) Echo(L *lua.LState) int {
 		case "$U$":
 			return "[::u]"
 		default:
-			l.Printf("Find Unknown Color Code: %s\n", code)
+			l.screen.Printf("Find Unknown Color Code: %s\n", code)
 		}
 		return ""
 	})
 
-	l.Println(text)
+	l.screen.Println(text)
 
 	// TODO: 这里暂时不支持 ANSI 到 PLAIN 的转换
 	l.OnReceive(text, text)
@@ -253,19 +250,19 @@ func (l *LuaRobot) Echo(L *lua.LState) int {
 	return 0
 }
 
-func (l *LuaRobot) Run(L *lua.LState) int {
+func (l *LuaRobot) LuaRun(L *lua.LState) int {
 	text := L.ToString(1)
-	fmt.Fprintln(l.screen, text)
+	l.screen.Println(text)
 	return 0
 }
 
-func (l *LuaRobot) Send(L *lua.LState) int {
+func (l *LuaRobot) LuaSend(L *lua.LState) int {
 	text := L.ToString(1)
 	fmt.Fprintln(l.mud, text)
 	return 0
 }
 
-func (l *LuaRobot) AddTimer(L *lua.LState) int {
+func (l *LuaRobot) LuaAddTimer(L *lua.LState) int {
 	id := L.ToString(1)
 	code := L.ToString(2)
 	delay := L.ToInt(3)
@@ -305,7 +302,7 @@ func (l *LuaRobot) AddTimer(L *lua.LState) int {
 	return 0
 }
 
-func (l *LuaRobot) DelTimer(L *lua.LState) int {
+func (l *LuaRobot) LuaDelTimer(L *lua.LState) int {
 	id := L.ToString(1)
 	v, ok := l.timer.Load(id)
 	if ok {
@@ -332,6 +329,6 @@ type Timer struct {
 func (t *Timer) Emit(l *LuaRobot) {
 	err := l.lstate.DoString(`call_timer_actions("` + t.id + `")`)
 	if err != nil {
-		l.Printf("Lua Error: %s\n", err)
+		l.screen.Printf("Lua Error: %s\n", err)
 	}
 }

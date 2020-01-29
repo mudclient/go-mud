@@ -1,1 +1,12 @@
 go-mud*
+dist/
+config.yaml
+config.json
+log/*
+out*
+*.log
+tmp/*
+
+app/version.go
+
+.DS_Store

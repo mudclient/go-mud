@@ -1,0 +1,83 @@
+# vim: set softtabstop=2 tabstop=2 shiftwidth=2:
+before:
+    hooks:
+      - go mod tidy
+      - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: darwin
+        goarch: 386
+
+archives:
+  - files:
+      - LICENSE
+      - README.md
+      - config-example.json
+      - config-example.yaml
+    name_template: "{{ .ProjectName }}_{{ .Env.GIT_DESCRIBE }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    replacements:
+        darwin: Darwin
+        linux: Linux
+        windows: Windows
+        386: i386
+        amd64: x86_64
+        arm: ARM
+        arm64: ARMv8
+
+checksum:
+    name_template: 'checksums.txt'
+
+snapshot:
+    name_template: "snapshot-{{ .Env.GIT_DESCRIBE }}"
+
+release:
+    prerelease: auto
+    name_template: "{{ .Env.GIT_DESCRIBE }}"
+
+changelog:
+    filters:
+        exclude:
+          - '^Docs:'
+          - '^Test:'
+          - '^(?i)WIP:'
+          - typo
+          - Merge pull request
+          - Merge branch
+
+brews:
+  - github:
+        owner: mudclient
+        name: homebrew-tap
+    folder: Formula
+    commit_author:
+        name: goreleaserbot
+        email: goreleaser@carlosbecker.com
+    description: "一个用 Go 语言开发的 MUD 客户端"
+    homepage: "https://github.com/mudclient/go-mud"
+    skip_upload: false
+    install: |
+        bin.install "go-mud"
