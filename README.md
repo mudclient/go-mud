@@ -49,20 +49,48 @@ GoMud 是一个 MUD 客户端，可以用来连接 MUD 服务器，提供纯文�
 * 通过 [Termux](https://termux.com/) 的帮助，GoMud 也可以在安卓下运行。你可以在运行安卓系统的手机或者电视机上使用 GoMud。
 * GoMud 也可以在群晖 NAS、运行有 OpenWRT 等 Linux 系统的智能路由器，或者树莓派上运行。
 
-### 通过源码安装
+### 安装指南
+
+本项目的[发布页面](https://github.com/dzpao/go-mud/releases)
+中包含了所有支持平台的预编译安装包，你可以根据自己的需要选择下载。
+
+#### macOS 快速安装
+
+macOS 用户推荐使用 [Homebrew](https://brew.sh) 来安装。如果你没用过它，不如趁此机会安装体验一下。
+
+```sh
+brew tap dzpao/go-mud
+brew install go-mud
+```
+
+#### Termux 快速安装
+
+运行了安卓系统的手机、平板电脑、电视机通过 Termux 也可以使用 GoMud，安装方法如下：
+
+```sh
+wget https://github.com/dzpao/go-mud/releases/download/v0.6.1/go-mud_v0.6.1_Termux_ARMv7.deb
+apt install ./go-mud_v0.6.1_Termux_ARMv7.deb
+```
+
+以上命令以 ARMv7 架构上 v0.6.1 版本的为例，
+其它版本及架构请前往发布页面选择相应的预编译安装包。
+如果你不知道自己设备的 CPU 架构，可以通过 `uname -m` 命令获知。
+
+#### 手动安装
+
+本项目的发布页面中包含了所有支持平台的预编译可执行文件。
+各平台的可执行文件名称略有不同，你可以下载和你的运行环境相对应的版本。
+GoMud 支持的平台非常丰富，限于篇幅，此处不再赘述。
+更多内容请查看[支持平台与安装指南](https://github.com/dzpao/go-mud/wiki/支持平台与安装指南)。
+
+#### 通过源码安装
 
 GoMud 采用 Go 语言实现，如果你要通过源码安装，则需要自行准备 Golang 开发环境。
-Golang 安装完毕后，通过如下 `go get` 命令即可安装：
+推荐使用 Go 1.13 或以上的版本。Golang 安装完毕后，通过如下 `go get` 命令即可安装：
 
 ```
 go get -u github.com/dzpao/go-mud
 ```
-
-### 下载预编译的可执行文件
-
-本项目的 [Release](https://github.com/dzpao/go-mud/releases) 中包含了所有支持平台的预编译可执行文件。
-各平台的可执行文件名称略有不同，统一格式为 `go-mud-<系统名称>-<硬件架构>`，
-你可以下载和你的运行环境相对应的版本，直接开始使用。
 
 ### 启动并进入北侠
 
@@ -84,7 +112,7 @@ GoMud 支持通过配置文件或者命令行选项的方式来指定程序运�
 
 ```
 $ go-mud --help       # 可以获得使用帮助
-go-mud(version 0.6)
+GoMud(version v0.6.1)
 
 Usage:
   go-mud [flags]
@@ -92,10 +120,12 @@ Usage:
 Flags:
   -c, --config FILENAME            config FILENAME, default to `config.yaml` or `config.json`
       --version                    just print version number only
-      --help                       show this message
+  -h, --help                       show this message
       --gen-yaml                   generate config.yaml
       --gen-json                   generate config.json
-      --ui.ambiguouswidth string   二义性字符宽度 (default "auto")
+      --ui.ambiguouswidth string   二义性字符宽度，可选值: auto/single/double/space (default "auto")
+      --ui.historylines int        历史记录保留行数 (default 100000)
+      --ui.rttvheight int          历史查看模式下实时文本区域高度 (default 10)
   -H, --mud.host IP/Domain         服务器 IP/Domain (default "mud.pkuxkx.net")
   -P, --mud.port Port              服务器 Port (default 8080)
       --lua.enable                 是否加载 Lua 机器人 (default true)
@@ -104,7 +134,7 @@ Flags:
 
 配置文件同时支持 [YAML](https://yaml.org/) 和 [JSON](https://json.org/) 两种格式，
 两种配置文件效果是一样的，用户可根据个人偏好选择使用，下面分别给出示例。
-配置项的说明参见 [Wiki](https://github.com/dzpao/go-mud/wiki/configuration)。
+配置项的说明参见[配置与运行](https://github.com/dzpao/go-mud/wiki/配置与运行)。
 
 #### config.yaml 示例
 
@@ -113,6 +143,8 @@ Flags:
 ```yaml
 UI:
   AmbiguousWidth: auto
+  HistoryLines: 100000
+  RTTVHeight: 10
 MUD:
   Host: mud.pkuxkx.net
   Port: 8080
@@ -128,7 +160,9 @@ Lua:
 ```json
 {
     "UI": {
-        "AmbiguousWidth": "auto"
+        "AmbiguousWidth": "auto",
+        "HistoryLines": 100000,
+        "RTTVHeight": 10
     },
     "Mud": {
         "Host": "mud.pkuxkx.net",

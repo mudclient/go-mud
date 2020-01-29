@@ -1,5 +1,7 @@
 UI:
   AmbiguousWidth: auto
+  HistoryLines: 100000
+  RTTVHeight: 10
 MUD:
   Host: mud.pkuxkx.net
   Port: 8080
