@@ -17,6 +17,12 @@
 <a href="https://github.com/mudclient/go-mud/actions?workflow=Build">
 <img alt="Build workflow" src="https://github.com/mudclient/go-mud/workflows/Build/badge.svg">
 </a>
+<a href="https://goreportcard.com/report/github.com/mudclient/go-mud">
+<img alt="Go Report" src="https://goreportcard.com/badge/github.com/mudclient/go-mud">
+</a>
+<a href="https://golangci.com/r/github.com/mudclient/go-mud">
+<img alt="GolangCI Report" src="https://github.com/golangci/golangci-web/blob/master/src/assets/images/badge_a_plus_flat.svg">
+</a>
     </p>
 </p>
 

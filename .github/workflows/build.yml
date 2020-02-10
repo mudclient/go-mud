@@ -25,3 +25,6 @@ jobs:
 
     - name: Build
       run: go build -v .
+
+    - name: Lint
+      run: docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.23.3 golangci-lint run -v ./...
