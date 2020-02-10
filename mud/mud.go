@@ -21,16 +21,16 @@ func init() {
 	encoder = mahonia.NewEncoder("GB18030")
 }
 
-type MudConfig struct {
+type Config struct {
 	IACDebug bool
 	Host     string `flag:"H|mud.pkuxkx.net|服务器 {IP/Domain}"`
 	Port     int    `flag:"P|8080|服务器 {Port}"`
 }
 
-type MudServer struct {
+type Server struct {
 	printer.SimplePrinter
 
-	config MudConfig
+	config Config
 
 	screen printer.Printer
 	server printer.WritePrinter
@@ -39,8 +39,8 @@ type MudServer struct {
 	input chan string
 }
 
-func NewMudServer(config MudConfig) *MudServer {
-	mud := &MudServer{
+func NewServer(config Config) *Server {
+	mud := &Server{
 		config: config,
 		screen: printer.NewSimplePrinter(os.Stdout),
 		server: printer.NewSimplePrinter(ioutil.Discard),
@@ -52,11 +52,11 @@ func NewMudServer(config MudConfig) *MudServer {
 	return mud
 }
 
-func (mud *MudServer) SetScreen(w printer.Printer) {
+func (mud *Server) SetScreen(w printer.Printer) {
 	mud.screen = w
 }
 
-func (mud *MudServer) Run() {
+func (mud *Server) Run() {
 	serverAddress := fmt.Sprintf("%s:%d", mud.config.Host, mud.config.Port)
 	mud.screen.Printf("连接到服务器 %s...", serverAddress)
 
@@ -107,7 +107,7 @@ LOOP:
 	close(mud.input)
 }
 
-func (mud *MudServer) telnetNegotiate(m IACMessage) {
+func (mud *Server) telnetNegotiate(m IACMessage) {
 	if m.Eq(WILL, O_ZMP) {
 		mud.conn.Write([]byte{IAC, DO, O_ZMP})
 		go func() {
@@ -139,12 +139,12 @@ func (mud *MudServer) telnetNegotiate(m IACMessage) {
 	}
 }
 
-func (mud *MudServer) Stop() {
+func (mud *Server) Stop() {
 	if mud.conn != nil {
 		mud.conn.Close()
 	}
 }
 
-func (mud *MudServer) Input() <-chan string {
+func (mud *Server) Input() <-chan string {
 	return mud.input
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type MudMessage interface {
+type Message interface {
 	IsMessage()
 }
 
@@ -35,7 +35,7 @@ type Scanner struct {
 	r     ReaderWithDeadline
 	buf   bytes.Buffer
 	state ScannerStatus
-	msg   MudMessage
+	msg   Message
 	done  bool
 }
 
@@ -53,7 +53,7 @@ func NewScanner(r ReaderWithDeadline) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() MudMessage {
+func (s *Scanner) Scan() Message {
 	if s.done {
 		return EOF(true)
 	}

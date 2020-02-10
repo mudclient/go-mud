@@ -12,7 +12,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-type UIConfig struct {
+type Config struct {
 	AmbiguousWidth string `flag:"|auto|二义性字符宽度，可选值: auto/single/double/space"`
 	HistoryLines   int    `flag:"|100000|历史记录保留行数"`
 	RTTVHeight     int    `flag:"|10|历史查看模式下实时文本区域高度"`
@@ -22,7 +22,7 @@ type UI struct {
 	printer.Printer
 	sync.Mutex
 
-	config UIConfig
+	config Config
 	app    *tview.Application
 
 	ansiWriter io.Writer
@@ -46,7 +46,7 @@ func init() {
 	tcell.ColorValues[tcell.ColorGreen] = 0x00C200
 }
 
-func NewUI(config UIConfig) *UI {
+func NewUI(config Config) *UI {
 	return &UI{
 		config: config,
 		input:  make(chan string, 10),

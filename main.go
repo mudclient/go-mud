@@ -20,16 +20,16 @@ import (
 )
 
 type ClientConfig struct {
-	UI  ui.UIConfig
-	Mud mud.MudConfig
-	Lua lua.LuaRobotConfig
+	UI  ui.Config
+	Mud mud.Config
+	Lua lua.Config
 }
 
 type Client struct {
 	config ClientConfig
 	ui     *ui.UI
-	lua    *lua.LuaRobot
-	mud    *mud.MudServer
+	lua    *lua.API
+	mud    *mud.Server
 	quit   chan bool
 }
 
@@ -47,8 +47,8 @@ func NewClient(config ClientConfig) *Client {
 	return &Client{
 		config: config,
 		ui:     ui.NewUI(config.UI),
-		lua:    lua.NewLuaRobot(config.Lua),
-		mud:    mud.NewMudServer(config.Mud),
+		lua:    lua.NewAPI(config.Lua),
+		mud:    mud.NewServer(config.Mud),
 		quit:   make(chan bool, 1),
 	}
 }
