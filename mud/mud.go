@@ -77,7 +77,7 @@ func (mud *Server) Run() {
 
 	scanner := NewScanner(mud.conn)
 
-	mud.conn.Write([]byte{IAC, DONT, O_SGA})
+	mud.conn.Write([]byte{IAC, DONT, OptSGA})
 
 LOOP:
 	for {
@@ -108,20 +108,20 @@ LOOP:
 }
 
 func (mud *Server) telnetNegotiate(m IACMessage) {
-	if m.Eq(WILL, O_ZMP) {
-		mud.conn.Write([]byte{IAC, DO, O_ZMP})
+	if m.Eq(WILL, OptZMP) {
+		mud.conn.Write([]byte{IAC, DO, OptZMP})
 		go func() {
 			for {
 				time.Sleep(10 * time.Second)
-				mud.conn.Write([]byte{IAC, SB, O_ZMP})
+				mud.conn.Write([]byte{IAC, SB, OptZMP})
 				mud.conn.Write([]byte("zmp.ping"))
 				mud.conn.Write([]byte{0, IAC, SE})
 			}
 		}()
-	} else if m.Eq(DO, O_TTYPE) {
-		mud.conn.Write([]byte{IAC, WILL, O_TTYPE})
-	} else if m.Eq(SB, O_TTYPE, 0x01) {
-		mud.conn.Write(append([]byte{IAC, SB, O_TTYPE, 0x00}, []byte("GoMud")...))
+	} else if m.Eq(DO, OptTTYPE) {
+		mud.conn.Write([]byte{IAC, WILL, OptTTYPE})
+	} else if m.Eq(SB, OptTTYPE, 0x01) {
+		mud.conn.Write(append([]byte{IAC, SB, OptTTYPE, 0x00}, []byte("GoMud")...))
 		mud.conn.Write([]byte{IAC, SE})
 	} else if m.Command == WILL {
 		mud.conn.Write([]byte{IAC, DONT, m.Args[0]})
