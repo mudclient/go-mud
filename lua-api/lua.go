@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"regexp"
@@ -310,11 +309,6 @@ func (l *LuaRobot) LuaDelTimer(L *lua.LState) int {
 	}
 	l.timer.Delete(id)
 	return 0
-}
-
-func (l *LuaRobot) Logf(format string, a ...interface{}) {
-	log.Printf(format, a...)
-	return
 }
 
 type Timer struct {

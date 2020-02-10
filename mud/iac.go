@@ -3,7 +3,6 @@ package mud
 import (
 	"bytes"
 	"fmt"
-	"log"
 )
 
 // IANA 管理的 Telnet 选项分配情况：
@@ -246,8 +245,7 @@ func (iac *IACMessage) Scan(b byte) bool {
 			iac.state = stDone
 			return true
 		default:
-			// TODO: 在这里处理所有的 IAC 指令
-			log.Printf("----未知指令: IAC %d", b)
+			// TODO: 需要处理未知 IAC 指令
 			iac.state = stDone
 			return true
 		}
@@ -260,7 +258,7 @@ func (iac *IACMessage) Scan(b byte) bool {
 		return false
 	default:
 		iac.state = stDone
-		log.Printf("未知指令: IAC %d", b)
+		// TODO: 需要处理未知 IAC 指令
 		return true
 	}
 }
