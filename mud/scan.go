@@ -109,7 +109,7 @@ func (s *Scanner) readByte() (byte, error) {
 		return b, err
 	}
 
-	s.r.SetReadDeadline(time.Now().Add(1 * time.Second))
+	_ = s.r.SetReadDeadline(time.Now().Add(1 * time.Second))
 	bytes := make([]byte, 1024)
 	n, err := s.r.Read(bytes)
 	if err == nil && n > 0 {

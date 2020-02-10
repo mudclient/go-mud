@@ -19,5 +19,4 @@ package ui
 // InitConsole initializes the Windows(R) console.  This platform
 // doesn't need to do anything.
 func InitConsole(title string) {
-	return
 }

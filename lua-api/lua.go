@@ -92,7 +92,6 @@ func (api *API) Reload() error {
 
 	l.Panic = func(*lua.LState) {
 		api.Panic(errors.New("LUA Panic"))
-		return
 	}
 
 	if err := l.DoFile(mainFile); err != nil {
@@ -144,11 +143,7 @@ func (api *API) OnSend(cmd string) bool {
 	ret := l.Get(-1)
 	l.Pop(1)
 
-	if ret == lua.LFalse {
-		return false
-	} else {
-		return true
-	}
+	return ret != lua.LFalse
 }
 
 func (api *API) Panic(err error) {

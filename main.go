@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"runtime"
 	"strings"
@@ -31,6 +32,8 @@ type Client struct {
 	lua    *lua.API
 	mud    *mud.Server
 	quit   chan bool
+
+	debug bool
 }
 
 func main() {
@@ -78,7 +81,7 @@ LOOP:
 			if ok {
 				showLine := beautify(rawLine)
 				plainLine := ansiRe.ReplaceAllString(rawLine, "")
-				if debug {
+				if c.debug {
 					line := showLine
 					line = strings.Replace(line, "\x1b[", "<OSI>", -1)
 					line = strings.Replace(line, "\t", "<TAB>", -1)
@@ -90,8 +93,7 @@ LOOP:
 				c.ui.Println(showLine)
 				c.lua.OnReceive(rawLine, plainLine)
 			} else {
-				c.ui.Println("程序即将退出。")
-				time.Sleep(3 * time.Second)
+				defer log.Printf("连接已断开。")
 				break LOOP
 			}
 		case cmd := <-c.ui.Input():
@@ -103,37 +105,40 @@ LOOP:
 	c.mud.Stop()
 }
 
-var debug bool
-
 func (c *Client) DoCmd(cmd string) {
-	if cmd == "exit" || cmd == "quit" {
+	switch cmd {
+	case "exit", "quit":
 		c.quit <- true
 		return
-	} else if cmd == "/version" {
+	case "/version":
 		c.ui.Print(app.VersionDetail())
 		return
-	} else if cmd == "/reload-lua" {
-		c.lua.Reload()
+	case "/reload-lua":
+		err := c.lua.Reload()
+		c.ui.Printf("Error: %s\n", err)
 		return
-	} else if cmd == "/debug" {
-		debug = !debug
+	case "/debug":
+		c.debug = !c.debug
 		return
-	} else if cmd == "/lines" {
+	case "/lines":
 		for i := 0; i < 100000; i++ {
 			c.ui.Printf("%d %s\n", i, time.Now())
 		}
 		c.ui.Println("测试内容填充完毕")
 		return
-	} else if strings.HasPrefix(cmd, `'`) {
-		cmd = "say " + cmd[1:]
-	} else if strings.HasPrefix(cmd, `"`) {
-		cmd = "chat " + cmd[1:]
-	} else if strings.HasPrefix(cmd, `*`) {
-		cmd = "chat* " + cmd[1:]
-	} else if strings.HasPrefix(cmd, `;`) {
-		cmd = "rumor " + cmd[1:]
-	} else if cmd == "debug" {
-		debug = !debug
+	}
+
+	if len(cmd) > 0 {
+		switch cmd[0] {
+		case '\'':
+			cmd = "say " + cmd[1:]
+		case '"':
+			cmd = "chat " + cmd[1:]
+		case '*':
+			cmd = "chat* " + cmd[1:]
+		case ';':
+			cmd = "rumor " + cmd[1:]
+		}
 	}
 
 	c.ui.Println(cmd)
@@ -169,9 +174,8 @@ func ambiWidthAdjuster(option string) func(string) string {
 	case "auto":
 		if runtime.GOOS == "windows" {
 			return singleAmbiguousWidth
-		} else {
-			return doubleAmbiguousWidth
 		}
+		return doubleAmbiguousWidth
 	default:
 		return singleAmbiguousWidth
 	}

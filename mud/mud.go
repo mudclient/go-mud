@@ -108,7 +108,8 @@ LOOP:
 }
 
 func (mud *Server) telnetNegotiate(m IACMessage) {
-	if m.Eq(WILL, OptZMP) {
+	switch {
+	case m.Eq(WILL, OptZMP):
 		mud.conn.Write([]byte{IAC, DO, OptZMP})
 		go func() {
 			for {
@@ -118,16 +119,16 @@ func (mud *Server) telnetNegotiate(m IACMessage) {
 				mud.conn.Write([]byte{0, IAC, SE})
 			}
 		}()
-	} else if m.Eq(DO, OptTTYPE) {
+	case m.Eq(DO, OptTTYPE):
 		mud.conn.Write([]byte{IAC, WILL, OptTTYPE})
-	} else if m.Eq(SB, OptTTYPE, 0x01) {
+	case m.Eq(SB, OptTTYPE, 0x01):
 		mud.conn.Write(append([]byte{IAC, SB, OptTTYPE, 0x00}, []byte("GoMud")...))
 		mud.conn.Write([]byte{IAC, SE})
-	} else if m.Command == WILL {
+	case m.Eq(WILL):
 		mud.conn.Write([]byte{IAC, DONT, m.Args[0]})
-	} else if m.Command == DO {
+	case m.Eq(DO):
 		mud.conn.Write([]byte{IAC, WONT, m.Args[0]})
-	} else if m.Command == GA {
+	case m.Eq(GA):
 		// FIXME: 接收到 GA 后，应当强制完成当前的不完整的行。
 		// TODO: 更进一步地，应当在 GA 收到前，阻止用户发送命令。
 		//       为了不影响用户体验，可以允许输入，但不允许回车发送，等到收到 GA 后再发送。

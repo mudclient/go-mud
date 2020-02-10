@@ -92,23 +92,28 @@ func (ui *UI) Create(title string) {
 	})
 
 	ui.cmdLine.SetChangedFunc(func(text string) {
-		if strings.HasPrefix(text, `"`) {
+		if len(text) == 0 {
+			return
+		}
+
+		switch text[0] {
+		case '"':
 			ui.cmdLine.SetLabel("闲聊: ").
 				SetLabelColor(tcell.ColorLightCyan).
 				SetFieldTextColor(tcell.ColorLightCyan)
-		} else if strings.HasPrefix(text, `*`) {
+		case '*':
 			ui.cmdLine.SetLabel("表情: ").
 				SetLabelColor(tcell.ColorLime).
 				SetFieldTextColor(tcell.ColorLime)
-		} else if strings.HasPrefix(text, `'`) {
+		case '\'':
 			ui.cmdLine.SetLabel("说话: ").
 				SetLabelColor(tcell.ColorDarkCyan).
 				SetFieldTextColor(tcell.ColorDarkCyan)
-		} else if strings.HasPrefix(text, `;`) {
+		case ';':
 			ui.cmdLine.SetLabel("谣言: ").
 				SetLabelColor(tcell.ColorPink).
 				SetFieldTextColor(tcell.ColorPink)
-		} else {
+		default:
 			ui.cmdLine.SetLabel("命令: ").
 				SetLabelColor(tcell.ColorWhite).
 				SetFieldTextColor(tcell.ColorLightGrey)
@@ -152,19 +157,19 @@ func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 			ui.historyInputCapture(event)
 		}
 		return nil
-	} else {
-		if event.Key() == tcell.KeyCtrlB || event.Key() == tcell.KeyPgUp {
-			ui.app.SetFocus(ui.historyTV)
-			ui.historyInputCapture(event)
-			return nil
-		}
-		return ui.cmdLineInputCapture(event)
 	}
+
+	if event.Key() == tcell.KeyCtrlB || event.Key() == tcell.KeyPgUp {
+		ui.app.SetFocus(ui.historyTV)
+		ui.historyInputCapture(event)
+		return nil
+	}
+
+	return ui.cmdLineInputCapture(event)
 }
 
 func (ui *UI) cmdLineInputCapture(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyCtrlC:
+	if event.Key() == tcell.KeyCtrlC {
 		ui.cmdLine.SetText("")
 		return nil
 	}
@@ -315,7 +320,6 @@ func (ui *UI) drawHistory() {
 }
 
 func (ui *UI) SetOutput(w io.Writer) {
-	return
 }
 
 func (ui *UI) Print(a ...interface{}) (n int, err error) {
@@ -331,7 +335,7 @@ func (ui *UI) Print(a ...interface{}) (n int, err error) {
 	// 根据 strings.Split 的定义，如果 str 以换行符结束，则 lines 的最后一行为空串
 	unformed := len(lines[count-1]) > 0
 	if !unformed {
-		count -= 1
+		count--
 	}
 
 	i := 0
