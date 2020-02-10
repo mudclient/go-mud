@@ -78,47 +78,7 @@ func (ui *UI) Create(title string) {
 		SetLabelColor(tcell.ColorWhite).
 		SetLabel("命令: ")
 
-	ui.cmdLine.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
-			cmd := ui.cmdLine.GetText()
-			if cmd != "" {
-				ui.input <- cmd
-				ui.cmdLine.SetText("")
-			}
-			if ui.isScrolling() {
-				ui.pageEnd()
-			}
-		}
-	})
-
-	ui.cmdLine.SetChangedFunc(func(text string) {
-		if len(text) == 0 {
-			return
-		}
-
-		switch text[0] {
-		case '"':
-			ui.cmdLine.SetLabel("闲聊: ").
-				SetLabelColor(tcell.ColorLightCyan).
-				SetFieldTextColor(tcell.ColorLightCyan)
-		case '*':
-			ui.cmdLine.SetLabel("表情: ").
-				SetLabelColor(tcell.ColorLime).
-				SetFieldTextColor(tcell.ColorLime)
-		case '\'':
-			ui.cmdLine.SetLabel("说话: ").
-				SetLabelColor(tcell.ColorDarkCyan).
-				SetFieldTextColor(tcell.ColorDarkCyan)
-		case ';':
-			ui.cmdLine.SetLabel("谣言: ").
-				SetLabelColor(tcell.ColorPink).
-				SetFieldTextColor(tcell.ColorPink)
-		default:
-			ui.cmdLine.SetLabel("命令: ").
-				SetLabelColor(tcell.ColorWhite).
-				SetFieldTextColor(tcell.ColorLightGrey)
-		}
-	})
+	ui.cmdLine.SetChangedFunc(ui.cmdLineTextChanged)
 
 	ui.sepLine = tview.NewTextView().
 		SetTextAlign(tview.AlignCenter)
@@ -149,8 +109,10 @@ func (ui *UI) Create(title string) {
 }
 
 func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
+	key := event.Key()
+
 	if ui.isScrolling() {
-		if event.Key() == tcell.KeyCtrlC {
+		if key == tcell.KeyCtrlC {
 			ui.stopScrolling()
 			ui.app.SetFocus(ui.cmdLine)
 		} else {
@@ -159,9 +121,10 @@ func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
-	if event.Key() == tcell.KeyCtrlB || event.Key() == tcell.KeyPgUp {
+	if key == tcell.KeyCtrlB || key == tcell.KeyPgUp {
 		ui.app.SetFocus(ui.historyTV)
-		ui.historyInputCapture(event)
+		ui.startScrolling()
+		ui.pageUp(10)
 		return nil
 	}
 
@@ -169,12 +132,53 @@ func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (ui *UI) cmdLineInputCapture(event *tcell.EventKey) *tcell.EventKey {
-	if event.Key() == tcell.KeyCtrlC {
+	key := event.Key()
+
+	if key == tcell.KeyCtrlC {
 		ui.cmdLine.SetText("")
+		return nil
+	} else if key == tcell.KeyEnter {
+		cmd := ui.cmdLine.GetText()
+		if cmd != "" {
+			ui.input <- cmd
+			ui.cmdLine.SetText("")
+		}
+		if ui.isScrolling() {
+			ui.pageEnd()
+		}
 		return nil
 	}
 
 	return event
+}
+
+func (ui *UI) cmdLineTextChanged(text string) {
+	if len(text) == 0 {
+		return
+	}
+
+	switch text[0] {
+	case '"':
+		ui.cmdLine.SetLabel("闲聊: ").
+			SetLabelColor(tcell.ColorLightCyan).
+			SetFieldTextColor(tcell.ColorLightCyan)
+	case '*':
+		ui.cmdLine.SetLabel("表情: ").
+			SetLabelColor(tcell.ColorLime).
+			SetFieldTextColor(tcell.ColorLime)
+	case '\'':
+		ui.cmdLine.SetLabel("说话: ").
+			SetLabelColor(tcell.ColorDarkCyan).
+			SetFieldTextColor(tcell.ColorDarkCyan)
+	case ';':
+		ui.cmdLine.SetLabel("谣言: ").
+			SetLabelColor(tcell.ColorPink).
+			SetFieldTextColor(tcell.ColorPink)
+	default:
+		ui.cmdLine.SetLabel("命令: ").
+			SetLabelColor(tcell.ColorWhite).
+			SetFieldTextColor(tcell.ColorLightGrey)
+	}
 }
 
 func (ui *UI) historyInputCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -216,20 +220,56 @@ func (ui *UI) Input() <-chan string {
 	return ui.input
 }
 
+func (ui *UI) startScrolling() {
+	ui.Lock()
+	defer ui.Unlock()
+
+	if ui.scrolling {
+		return
+	}
+
+	ui.scrolling = true
+	_, _, _, height := ui.pages.GetInnerRect()
+	ui.pages.SwitchToPage("historyView")
+	ui.offset = len(ui.buffer) - height + 1
+	ui.app.Draw()
+}
+
+func (ui *UI) stopScrolling() {
+	ui.Lock()
+	defer ui.Unlock()
+
+	if !ui.scrolling {
+		return
+	}
+
+	ui.pages.SwitchToPage("mainView")
+	end := len(ui.buffer)
+	_, _, _, height := ui.pages.GetRect()
+	ui.offset = end - height
+	ui.scrolling = false
+	text := strings.Join(ui.buffer[ui.offset:end], "\n")
+	text = tview.TranslateANSI(text + "\n")
+	ui.realtimeTV.SetText(text)
+}
+
+func (ui *UI) isScrolling() bool {
+	ui.Lock()
+	defer ui.Unlock()
+
+	scrolling := ui.scrolling
+	return scrolling
+}
+
 func (ui *UI) pageUp(pageSize int) {
 	ui.Lock()
 	defer ui.Unlock()
 
 	if !ui.scrolling {
-		ui.scrolling = true
-		_, _, _, height := ui.pages.GetInnerRect()
-		ui.pages.SwitchToPage("historyView")
-		ui.app.Draw()
-		ui.offset = len(ui.buffer) - height + 1
-	} else {
-		ui.offset -= pageSize
+		return
 	}
 
+	ui.offset -= pageSize
 	ui.drawHistory()
 }
 
@@ -267,32 +307,6 @@ func (ui *UI) pageEnd() {
 
 	ui.offset = len(ui.buffer)
 	ui.drawHistory()
-}
-
-func (ui *UI) stopScrolling() {
-	ui.Lock()
-	defer ui.Unlock()
-
-	if !ui.scrolling {
-		return
-	}
-
-	ui.pages.SwitchToPage("mainView")
-	end := len(ui.buffer)
-	_, _, _, height := ui.pages.GetRect()
-	ui.offset = end - height
-	ui.scrolling = false
-	text := strings.Join(ui.buffer[ui.offset:end], "\n")
-	text = tview.TranslateANSI(text + "\n")
-	ui.realtimeTV.SetText(text)
-}
-
-func (ui *UI) isScrolling() bool {
-	ui.Lock()
-	defer ui.Unlock()
-
-	scrolling := ui.scrolling
-	return scrolling
 }
 
 func (ui *UI) drawHistory() {
