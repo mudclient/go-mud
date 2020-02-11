@@ -12,7 +12,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-type UIConfig struct {
+type Config struct {
 	AmbiguousWidth string `flag:"|auto|二义性字符宽度，可选值: auto/single/double/space"`
 	HistoryLines   int    `flag:"|100000|历史记录保留行数"`
 	RTTVHeight     int    `flag:"|10|历史查看模式下实时文本区域高度"`
@@ -22,7 +22,7 @@ type UI struct {
 	printer.Printer
 	sync.Mutex
 
-	config UIConfig
+	config Config
 	app    *tview.Application
 
 	ansiWriter io.Writer
@@ -46,7 +46,7 @@ func init() {
 	tcell.ColorValues[tcell.ColorGreen] = 0x00C200
 }
 
-func NewUI(config UIConfig) *UI {
+func NewUI(config Config) *UI {
 	return &UI{
 		config: config,
 		input:  make(chan string, 10),
@@ -78,42 +78,7 @@ func (ui *UI) Create(title string) {
 		SetLabelColor(tcell.ColorWhite).
 		SetLabel("命令: ")
 
-	ui.cmdLine.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
-			cmd := ui.cmdLine.GetText()
-			if cmd != "" {
-				ui.input <- cmd
-				ui.cmdLine.SetText("")
-			}
-			if ui.isScrolling() {
-				ui.pageEnd()
-			}
-		}
-	})
-
-	ui.cmdLine.SetChangedFunc(func(text string) {
-		if strings.HasPrefix(text, `"`) {
-			ui.cmdLine.SetLabel("闲聊: ").
-				SetLabelColor(tcell.ColorLightCyan).
-				SetFieldTextColor(tcell.ColorLightCyan)
-		} else if strings.HasPrefix(text, `*`) {
-			ui.cmdLine.SetLabel("表情: ").
-				SetLabelColor(tcell.ColorLime).
-				SetFieldTextColor(tcell.ColorLime)
-		} else if strings.HasPrefix(text, `'`) {
-			ui.cmdLine.SetLabel("说话: ").
-				SetLabelColor(tcell.ColorDarkCyan).
-				SetFieldTextColor(tcell.ColorDarkCyan)
-		} else if strings.HasPrefix(text, `;`) {
-			ui.cmdLine.SetLabel("谣言: ").
-				SetLabelColor(tcell.ColorPink).
-				SetFieldTextColor(tcell.ColorPink)
-		} else {
-			ui.cmdLine.SetLabel("命令: ").
-				SetLabelColor(tcell.ColorWhite).
-				SetFieldTextColor(tcell.ColorLightGrey)
-		}
-	})
+	ui.cmdLine.SetChangedFunc(ui.cmdLineTextChanged)
 
 	ui.sepLine = tview.NewTextView().
 		SetTextAlign(tview.AlignCenter)
@@ -144,32 +109,76 @@ func (ui *UI) Create(title string) {
 }
 
 func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
+	key := event.Key()
+
 	if ui.isScrolling() {
-		if event.Key() == tcell.KeyCtrlC {
+		if key == tcell.KeyCtrlC {
 			ui.stopScrolling()
 			ui.app.SetFocus(ui.cmdLine)
 		} else {
 			ui.historyInputCapture(event)
 		}
 		return nil
-	} else {
-		if event.Key() == tcell.KeyCtrlB || event.Key() == tcell.KeyPgUp {
-			ui.app.SetFocus(ui.historyTV)
-			ui.historyInputCapture(event)
-			return nil
-		}
-		return ui.cmdLineInputCapture(event)
 	}
+
+	if key == tcell.KeyCtrlB || key == tcell.KeyPgUp {
+		ui.app.SetFocus(ui.historyTV)
+		ui.startScrolling()
+		ui.pageUp(10)
+		return nil
+	}
+
+	return ui.cmdLineInputCapture(event)
 }
 
 func (ui *UI) cmdLineInputCapture(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyCtrlC:
+	key := event.Key()
+
+	if key == tcell.KeyCtrlC {
 		ui.cmdLine.SetText("")
+		return nil
+	} else if key == tcell.KeyEnter {
+		cmd := ui.cmdLine.GetText()
+		if cmd != "" {
+			ui.input <- cmd
+			ui.cmdLine.SetText("")
+		}
+		if ui.isScrolling() {
+			ui.pageEnd()
+		}
 		return nil
 	}
 
 	return event
+}
+
+func (ui *UI) cmdLineTextChanged(text string) {
+	if len(text) == 0 {
+		return
+	}
+
+	switch text[0] {
+	case '"':
+		ui.cmdLine.SetLabel("闲聊: ").
+			SetLabelColor(tcell.ColorLightCyan).
+			SetFieldTextColor(tcell.ColorLightCyan)
+	case '*':
+		ui.cmdLine.SetLabel("表情: ").
+			SetLabelColor(tcell.ColorLime).
+			SetFieldTextColor(tcell.ColorLime)
+	case '\'':
+		ui.cmdLine.SetLabel("说话: ").
+			SetLabelColor(tcell.ColorDarkCyan).
+			SetFieldTextColor(tcell.ColorDarkCyan)
+	case ';':
+		ui.cmdLine.SetLabel("谣言: ").
+			SetLabelColor(tcell.ColorPink).
+			SetFieldTextColor(tcell.ColorPink)
+	default:
+		ui.cmdLine.SetLabel("命令: ").
+			SetLabelColor(tcell.ColorWhite).
+			SetFieldTextColor(tcell.ColorLightGrey)
+	}
 }
 
 func (ui *UI) historyInputCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -211,20 +220,56 @@ func (ui *UI) Input() <-chan string {
 	return ui.input
 }
 
+func (ui *UI) startScrolling() {
+	ui.Lock()
+	defer ui.Unlock()
+
+	if ui.scrolling {
+		return
+	}
+
+	ui.scrolling = true
+	_, _, _, height := ui.pages.GetInnerRect()
+	ui.pages.SwitchToPage("historyView")
+	ui.offset = len(ui.buffer) - height + 1
+	ui.app.Draw()
+}
+
+func (ui *UI) stopScrolling() {
+	ui.Lock()
+	defer ui.Unlock()
+
+	if !ui.scrolling {
+		return
+	}
+
+	ui.pages.SwitchToPage("mainView")
+	end := len(ui.buffer)
+	_, _, _, height := ui.pages.GetRect()
+	ui.offset = end - height
+	ui.scrolling = false
+	text := strings.Join(ui.buffer[ui.offset:end], "\n")
+	text = tview.TranslateANSI(text + "\n")
+	ui.realtimeTV.SetText(text)
+}
+
+func (ui *UI) isScrolling() bool {
+	ui.Lock()
+	defer ui.Unlock()
+
+	scrolling := ui.scrolling
+	return scrolling
+}
+
 func (ui *UI) pageUp(pageSize int) {
 	ui.Lock()
 	defer ui.Unlock()
 
 	if !ui.scrolling {
-		ui.scrolling = true
-		_, _, _, height := ui.pages.GetInnerRect()
-		ui.pages.SwitchToPage("historyView")
-		ui.app.Draw()
-		ui.offset = len(ui.buffer) - height + 1
-	} else {
-		ui.offset -= pageSize
+		return
 	}
 
+	ui.offset -= pageSize
 	ui.drawHistory()
 }
 
@@ -264,32 +309,6 @@ func (ui *UI) pageEnd() {
 	ui.drawHistory()
 }
 
-func (ui *UI) stopScrolling() {
-	ui.Lock()
-	defer ui.Unlock()
-
-	if !ui.scrolling {
-		return
-	}
-
-	ui.pages.SwitchToPage("mainView")
-	end := len(ui.buffer)
-	_, _, _, height := ui.pages.GetRect()
-	ui.offset = end - height
-	ui.scrolling = false
-	text := strings.Join(ui.buffer[ui.offset:end], "\n")
-	text = tview.TranslateANSI(text + "\n")
-	ui.realtimeTV.SetText(text)
-}
-
-func (ui *UI) isScrolling() bool {
-	ui.Lock()
-	defer ui.Unlock()
-
-	scrolling := ui.scrolling
-	return scrolling
-}
-
 func (ui *UI) drawHistory() {
 	if ui.offset < 0 {
 		ui.offset = 0
@@ -315,7 +334,6 @@ func (ui *UI) drawHistory() {
 }
 
 func (ui *UI) SetOutput(w io.Writer) {
-	return
 }
 
 func (ui *UI) Print(a ...interface{}) (n int, err error) {
@@ -331,7 +349,7 @@ func (ui *UI) Print(a ...interface{}) (n int, err error) {
 	// 根据 strings.Split 的定义，如果 str 以换行符结束，则 lines 的最后一行为空串
 	unformed := len(lines[count-1]) > 0
 	if !unformed {
-		count -= 1
+		count--
 	}
 
 	i := 0

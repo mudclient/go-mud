@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type MudMessage interface {
+type Message interface {
 	IsMessage()
 }
 
@@ -35,8 +35,8 @@ type Scanner struct {
 	r     ReaderWithDeadline
 	buf   bytes.Buffer
 	state ScannerStatus
-	msg   MudMessage
-	done  bool
+	// msg   Message
+	done bool
 }
 
 type ScannerStatus int
@@ -44,7 +44,7 @@ type ScannerStatus int
 const (
 	stText ScannerStatus = iota
 	stIACCommand
-	stANSICodes
+	// stANSICodes
 )
 
 func NewScanner(r ReaderWithDeadline) *Scanner {
@@ -53,7 +53,7 @@ func NewScanner(r ReaderWithDeadline) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() MudMessage {
+func (s *Scanner) Scan() Message {
 	if s.done {
 		return EOF(true)
 	}
@@ -109,7 +109,7 @@ func (s *Scanner) readByte() (byte, error) {
 		return b, err
 	}
 
-	s.r.SetReadDeadline(time.Now().Add(1 * time.Second))
+	_ = s.r.SetReadDeadline(time.Now().Add(1 * time.Second))
 	bytes := make([]byte, 1024)
 	n, err := s.r.Read(bytes)
 	if err == nil && n > 0 {

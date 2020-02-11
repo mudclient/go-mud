@@ -1,0 +1,30 @@
+service:
+    golangci-lint-version: 1.23.x
+    prepare:
+        - go mod tidy
+        - go generate ./...
+
+linters:
+    enable-all: true
+    disable:
+# 因为只有两行语句的 case 语句里面强制要求 return 语句换行会让整个 switch 很分裂。
+        - wsl
+# 因为连 1 都算 magic number 的话，许多循环就没法写了。
+# https://github.com/tommy-muehle/go-mnd/issues/3
+        - gomnd
+# 有些情况下错误不可避免：
+# https://github.com/alexkohler/dogsled/issues/2
+        - dogsled
+# V1.0 之前有 TODO/FIXME 很正常吧。
+        - godox
+# 有些情况下错误不可避免：
+# https://github.com/mvdan/unparam/issues/43
+        - unparam
+# 下面这两个 checker 太过激进，并不认同
+        - gochecknoglobals
+        - gochecknoinits
+
+linters-settings:
+    errcheck:
+        check-type-assertions: true
+        ignore: '[FS]?[Pp]rint(|f|ln)|Write'

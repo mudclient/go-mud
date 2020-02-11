@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"regexp"
@@ -15,13 +14,13 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-type LuaRobotConfig struct {
+type Config struct {
 	Enable bool   `flag:"|true|是否加载 Lua 机器人"`
 	Path   string `flag:"p|lua|Lua 插件路径 {path}"`
 }
 
-type LuaRobot struct {
-	config LuaRobotConfig
+type API struct {
+	config Config
 
 	screen printer.Printer
 	mud    io.Writer
@@ -33,240 +32,222 @@ type LuaRobot struct {
 	timer sync.Map
 }
 
-func NewLuaRobot(config LuaRobotConfig) *LuaRobot {
-	return &LuaRobot{
+func NewAPI(config Config) *API {
+	return &API{
 		config: config,
 		screen: printer.NewSimplePrinter(os.Stdout),
 	}
 }
 
-func (l *LuaRobot) Init() {
-	if !l.config.Enable {
+func (api *API) Init() {
+	if !api.config.Enable {
 		return
 	}
 
-	if err := l.Reload(); err != nil {
-		l.screen.Println("Lua 初始化失败。")
+	if err := api.Reload(); err != nil {
+		api.screen.Println("Lua 初始化失败。")
 		return
 	}
 }
 
-func (l *LuaRobot) SetScreen(w printer.Printer) {
-	l.screen = w
+func (api *API) SetScreen(w printer.Printer) {
+	api.screen = w
 }
 
-func (l *LuaRobot) SetMud(w io.Writer) {
-	l.mud = w
+func (api *API) SetMud(w io.Writer) {
+	api.mud = w
 }
 
-func (l *LuaRobot) Reload() error {
-	mainFile := path.Join(l.config.Path, "main.lua")
+func (api *API) Reload() error {
+	mainFile := path.Join(api.config.Path, "main.lua")
 	if _, err := os.Open(mainFile); err != nil {
-		l.screen.Printf("Load error: %s\n", err)
-		l.screen.Println("无法打开 lua 主程序，请检查你的配置。")
+		api.screen.Printf("Load error: %s\n", err)
+		api.screen.Println("无法打开 lua 主程序，请检查你的配置。")
 		return err
 	}
 
-	if l.lstate != nil {
-		l.lstate.Close()
-		l.screen.Println("Lua 环境已关闭。")
+	if api.lstate != nil {
+		api.lstate.Close()
+		api.screen.Println("Lua 环境已关闭。")
 	}
 
-	l.screen.Println("初始化 Lua 环境...")
+	api.screen.Println("初始化 Lua 环境...")
 
-	luaPath := path.Join(l.config.Path, "?.lua")
+	luaPath := path.Join(api.config.Path, "?.lua")
 	os.Setenv(lua.LuaPath, luaPath+";;")
 
-	l.lstate = lua.NewState()
+	api.lstate = lua.NewState()
 
-	l.lstate.SetGlobal("RegEx", l.lstate.NewFunction(l.LuaRegEx))
-	l.lstate.SetGlobal("Echo", l.lstate.NewFunction(l.LuaEcho))
-	l.lstate.SetGlobal("Print", l.lstate.NewFunction(l.LuaPrint))
-	l.lstate.SetGlobal("Run", l.lstate.NewFunction(l.LuaRun))
-	l.lstate.SetGlobal("Send", l.lstate.NewFunction(l.LuaSend))
-	l.lstate.SetGlobal("AddTimer", l.lstate.NewFunction(l.LuaAddTimer))
-	l.lstate.SetGlobal("AddMSTimer", l.lstate.NewFunction(l.LuaAddTimer))
-	l.lstate.SetGlobal("DelTimer", l.lstate.NewFunction(l.LuaDelTimer))
-	l.lstate.SetGlobal("DelMSTimer", l.lstate.NewFunction(l.LuaDelTimer))
+	l := api.lstate
 
-	l.lstate.Panic = func(*lua.LState) {
-		l.Panic(errors.New("LUA Panic"))
-		return
+	l.SetGlobal("RegEx", l.NewFunction(api.LuaRegEx))
+	l.SetGlobal("Echo", l.NewFunction(api.LuaEcho))
+	l.SetGlobal("Print", l.NewFunction(api.LuaPrint))
+	l.SetGlobal("Run", l.NewFunction(api.LuaRun))
+	l.SetGlobal("Send", l.NewFunction(api.LuaSend))
+	l.SetGlobal("AddTimer", l.NewFunction(api.LuaAddTimer))
+	l.SetGlobal("AddMSTimer", l.NewFunction(api.LuaAddTimer))
+	l.SetGlobal("DelTimer", l.NewFunction(api.LuaDelTimer))
+	l.SetGlobal("DelMSTimer", l.NewFunction(api.LuaDelTimer))
+
+	l.Panic = func(*lua.LState) {
+		api.Panic(errors.New("LUA Panic"))
 	}
 
-	if err := l.lstate.DoFile(mainFile); err != nil {
-		l.lstate.Close()
-		l.lstate = nil
+	if err := l.DoFile(mainFile); err != nil {
+		l.Close()
+		api.lstate = nil
 		return err
 	}
 
-	l.onReceive = lua.P{
-		Fn:      l.lstate.GetGlobal("OnReceive"),
+	api.onReceive = lua.P{
+		Fn:      l.GetGlobal("OnReceive"),
 		NRet:    0,
 		Protect: true,
 	}
 
-	l.onSend = lua.P{
-		Fn:      l.lstate.GetGlobal("OnSend"),
+	api.onSend = lua.P{
+		Fn:      l.GetGlobal("OnSend"),
 		NRet:    1,
 		Protect: true,
 	}
 
-	l.screen.Println("Lua 环境初始化完成。")
+	api.screen.Println("Lua 环境初始化完成。")
 
 	return nil
 }
 
-func (l *LuaRobot) OnReceive(raw, input string) {
-	if l.lstate == nil {
+func (api *API) OnReceive(raw, input string) {
+	if api.lstate == nil {
 		return
 	}
 
-	L := l.lstate
-	err := L.CallByParam(l.onReceive, lua.LString(raw), lua.LString(input))
+	l := api.lstate
+	err := l.CallByParam(api.onReceive, lua.LString(raw), lua.LString(input))
 	if err != nil {
-		l.Panic(err)
+		api.Panic(err)
 	}
 }
 
-func (l *LuaRobot) OnSend(cmd string) bool {
-	if l.lstate == nil {
+func (api *API) OnSend(cmd string) bool {
+	if api.lstate == nil {
 		return true
 	}
 
-	L := l.lstate
-	err := L.CallByParam(l.onSend, lua.LString(cmd))
+	l := api.lstate
+	err := l.CallByParam(api.onSend, lua.LString(cmd))
 	if err != nil {
-		l.Panic(err)
+		api.Panic(err)
 	}
 
-	ret := L.Get(-1)
-	L.Pop(1)
+	ret := l.Get(-1)
+	l.Pop(1)
 
-	if ret == lua.LFalse {
-		return false
-	} else {
-		return true
-	}
+	return ret != lua.LFalse
 }
 
-func (l *LuaRobot) Panic(err error) {
-	l.screen.Printf("Lua error: [%v]\n", err)
+func (api *API) Panic(err error) {
+	api.screen.Printf("Lua error: [%v]\n", err)
 }
 
-func (l *LuaRobot) LuaRegEx(L *lua.LState) int {
-	text := L.ToString(1)
-	regex := L.ToString(2)
+func (api *API) LuaRegEx(l *lua.LState) int {
+	text := l.ToString(1)
+	regex := l.ToString(2)
 
 	re, err := regexp.Compile(regex)
 	if err != nil {
-		L.Push(lua.LString("0"))
+		l.Push(lua.LString("0"))
 		return 1
 	}
 
 	matchs := re.FindAllStringSubmatch(text, -1)
 	if matchs == nil {
-		L.Push(lua.LString("0"))
+		l.Push(lua.LString("0"))
 		return 1
 	}
 
 	subs := matchs[0]
 	length := len(subs)
 	if length == 1 {
-		L.Push(lua.LString("-1"))
+		l.Push(lua.LString("-1"))
 		return 1
 	}
 
-	L.Push(lua.LString(fmt.Sprintf("%d", length-1)))
+	l.Push(lua.LString(fmt.Sprintf("%d", length-1)))
 
 	for i := 1; i < length; i++ {
-		L.Push(lua.LString(subs[i]))
+		l.Push(lua.LString(subs[i]))
 	}
 
 	return length
 }
 
-func (l *LuaRobot) LuaPrint(L *lua.LState) int {
-	text := L.ToString(1)
-	l.screen.Println(text)
+func (api *API) LuaPrint(l *lua.LState) int {
+	text := l.ToString(1)
+	api.screen.Println(text)
 	return 0
 }
 
-func (l *LuaRobot) LuaEcho(L *lua.LState) int {
-	text := L.ToString(1)
+func (api *API) LuaEcho(l *lua.LState) int {
+	text := l.ToString(1)
+
+	codes := map[string]string{
+		"$BLK$": "[black::]",
+		"$NOR$": "[-:-:-]",
+		"$RED$": "[red::]",
+		"$HIR$": "[red::b]",
+		"$GRN$": "[green::]",
+		"$HIG$": "[green::b]",
+		"$YEL$": "[yellow::]",
+		"$HIY$": "[yellow::b]",
+		"$BLU$": "[blue::]",
+		"$HIB$": "[blue::b]",
+		"$MAG$": "[darkmagenta::]",
+		"$HIM$": "[#ff00ff::]",
+		"$CYN$": "[dardcyan::]",
+		"$HIC$": "[#00ffff::]",
+		"$WHT$": "[white::]",
+		"$HIW$": "[#ffffff::]",
+		"$BNK$": "[::l]",
+		"$REV$": "[::7]",
+		"$U$":   "[::u]",
+	}
 
 	re := regexp.MustCompile(`\$(BLK|NOR|RED|HIR|GRN|HIG|YEL|HIY|BLU|HIB|MAG|HIM|CYN|HIC|WHT|HIW|BNK|REV|U)\$`)
 	text = re.ReplaceAllStringFunc(text, func(code string) string {
-		switch code {
-		case "$BLK$":
-			return "[black::]"
-		case "$NOR$":
-			return "[-:-:-]"
-		case "$RED$":
-			return "[red::]"
-		case "$HIR$":
-			return "[red::b]"
-		case "$GRN$":
-			return "[green::]"
-		case "$HIG$":
-			return "[green::b]"
-		case "$YEL$":
-			return "[yellow::]"
-		case "$HIY$":
-			return "[yellow::b]"
-		case "$BLU$":
-			return "[blue::]"
-		case "$HIB$":
-			return "[blue::b]"
-		case "$MAG$":
-			return "[darkmagenta::]"
-		case "$HIM$":
-			return "[#ff00ff::]"
-		case "$CYN$":
-			return "[dardcyan::]"
-		case "$HIC$":
-			return "[#00ffff::]"
-		case "$WHT$":
-			return "[white::]"
-		case "$HIW$":
-			return "[#ffffff::]"
-		case "$BNK$":
-			return "[::l]"
-		case "$REV$":
-			return "[::7]"
-		case "$U$":
-			return "[::u]"
-		default:
-			l.screen.Printf("Find Unknown Color Code: %s\n", code)
+		code, ok := codes[code]
+		if ok {
+			return code
 		}
+		api.screen.Printf("Find Unknown Color Code: %s\n", code)
 		return ""
 	})
 
-	l.screen.Println(text)
+	api.screen.Println(text)
 
 	// TODO: 这里暂时不支持 ANSI 到 PLAIN 的转换
-	l.OnReceive(text, text)
+	api.OnReceive(text, text)
 
 	return 0
 }
 
-func (l *LuaRobot) LuaRun(L *lua.LState) int {
-	text := L.ToString(1)
-	l.screen.Println(text)
+func (api *API) LuaRun(l *lua.LState) int {
+	text := l.ToString(1)
+	api.screen.Println(text)
 	return 0
 }
 
-func (l *LuaRobot) LuaSend(L *lua.LState) int {
-	text := L.ToString(1)
-	fmt.Fprintln(l.mud, text)
+func (api *API) LuaSend(l *lua.LState) int {
+	text := l.ToString(1)
+	fmt.Fprintln(api.mud, text)
 	return 0
 }
 
-func (l *LuaRobot) LuaAddTimer(L *lua.LState) int {
-	id := L.ToString(1)
-	code := L.ToString(2)
-	delay := L.ToInt(3)
-	times := L.ToInt(4)
+func (api *API) LuaAddTimer(l *lua.LState) int {
+	id := l.ToString(1)
+	code := l.ToString(2)
+	delay := l.ToInt(3)
+	times := l.ToInt(4)
 
 	go func() {
 		count := 0
@@ -279,10 +260,10 @@ func (l *LuaRobot) LuaAddTimer(L *lua.LState) int {
 			times:    0,
 			quit:     quit,
 		}
-		v, exists := l.timer.LoadOrStore(id, timer)
+		v, exists := api.timer.LoadOrStore(id, timer)
 		if exists {
 			v.(Timer).quit <- true
-			l.timer.Store(id, timer)
+			api.timer.Store(id, timer)
 		}
 
 		for {
@@ -290,7 +271,7 @@ func (l *LuaRobot) LuaAddTimer(L *lua.LState) int {
 			case <-quit:
 				return
 			case <-time.After(time.Millisecond * time.Duration(delay)):
-				timer.Emit(l)
+				timer.Emit(api)
 				count++
 				if times > 0 && times >= count {
 					return
@@ -302,19 +283,14 @@ func (l *LuaRobot) LuaAddTimer(L *lua.LState) int {
 	return 0
 }
 
-func (l *LuaRobot) LuaDelTimer(L *lua.LState) int {
-	id := L.ToString(1)
-	v, ok := l.timer.Load(id)
+func (api *API) LuaDelTimer(l *lua.LState) int {
+	id := l.ToString(1)
+	v, ok := api.timer.Load(id)
 	if ok {
 		v.(Timer).quit <- true
 	}
-	l.timer.Delete(id)
+	api.timer.Delete(id)
 	return 0
-}
-
-func (l *LuaRobot) Logf(format string, a ...interface{}) {
-	log.Printf(format, a...)
-	return
 }
 
 type Timer struct {
@@ -326,7 +302,7 @@ type Timer struct {
 	quit     chan<- bool
 }
 
-func (t *Timer) Emit(l *LuaRobot) {
+func (t *Timer) Emit(l *API) {
 	err := l.lstate.DoString(`call_timer_actions("` + t.id + `")`)
 	if err != nil {
 		l.screen.Printf("Lua Error: %s\n", err)

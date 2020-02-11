@@ -21,16 +21,16 @@ func init() {
 	encoder = mahonia.NewEncoder("GB18030")
 }
 
-type MudConfig struct {
+type Config struct {
 	IACDebug bool
 	Host     string `flag:"H|mud.pkuxkx.net|服务器 {IP/Domain}"`
 	Port     int    `flag:"P|8080|服务器 {Port}"`
 }
 
-type MudServer struct {
+type Server struct {
 	printer.SimplePrinter
 
-	config MudConfig
+	config Config
 
 	screen printer.Printer
 	server printer.WritePrinter
@@ -39,8 +39,8 @@ type MudServer struct {
 	input chan string
 }
 
-func NewMudServer(config MudConfig) *MudServer {
-	mud := &MudServer{
+func NewServer(config Config) *Server {
+	mud := &Server{
 		config: config,
 		screen: printer.NewSimplePrinter(os.Stdout),
 		server: printer.NewSimplePrinter(ioutil.Discard),
@@ -52,11 +52,11 @@ func NewMudServer(config MudConfig) *MudServer {
 	return mud
 }
 
-func (mud *MudServer) SetScreen(w printer.Printer) {
+func (mud *Server) SetScreen(w printer.Printer) {
 	mud.screen = w
 }
 
-func (mud *MudServer) Run() {
+func (mud *Server) Run() {
 	serverAddress := fmt.Sprintf("%s:%d", mud.config.Host, mud.config.Port)
 	mud.screen.Printf("连接到服务器 %s...", serverAddress)
 
@@ -77,7 +77,7 @@ func (mud *MudServer) Run() {
 
 	scanner := NewScanner(mud.conn)
 
-	mud.conn.Write([]byte{IAC, DONT, O_SGA})
+	mud.conn.Write([]byte{IAC, DONT, OptSGA})
 
 LOOP:
 	for {
@@ -107,27 +107,28 @@ LOOP:
 	close(mud.input)
 }
 
-func (mud *MudServer) telnetNegotiate(m IACMessage) {
-	if m.Eq(WILL, O_ZMP) {
-		mud.conn.Write([]byte{IAC, DO, O_ZMP})
+func (mud *Server) telnetNegotiate(m IACMessage) {
+	switch {
+	case m.Eq(WILL, OptZMP):
+		mud.conn.Write([]byte{IAC, DO, OptZMP})
 		go func() {
 			for {
 				time.Sleep(10 * time.Second)
-				mud.conn.Write([]byte{IAC, SB, O_ZMP})
+				mud.conn.Write([]byte{IAC, SB, OptZMP})
 				mud.conn.Write([]byte("zmp.ping"))
 				mud.conn.Write([]byte{0, IAC, SE})
 			}
 		}()
-	} else if m.Eq(DO, O_TTYPE) {
-		mud.conn.Write([]byte{IAC, WILL, O_TTYPE})
-	} else if m.Eq(SB, O_TTYPE, 0x01) {
-		mud.conn.Write(append([]byte{IAC, SB, O_TTYPE, 0x00}, []byte("GoMud")...))
+	case m.Eq(DO, OptTTYPE):
+		mud.conn.Write([]byte{IAC, WILL, OptTTYPE})
+	case m.Eq(SB, OptTTYPE, 0x01):
+		mud.conn.Write(append([]byte{IAC, SB, OptTTYPE, 0x00}, []byte("GoMud")...))
 		mud.conn.Write([]byte{IAC, SE})
-	} else if m.Command == WILL {
+	case m.Eq(WILL):
 		mud.conn.Write([]byte{IAC, DONT, m.Args[0]})
-	} else if m.Command == DO {
+	case m.Eq(DO):
 		mud.conn.Write([]byte{IAC, WONT, m.Args[0]})
-	} else if m.Command == GA {
+	case m.Eq(GA):
 		// FIXME: 接收到 GA 后，应当强制完成当前的不完整的行。
 		// TODO: 更进一步地，应当在 GA 收到前，阻止用户发送命令。
 		//       为了不影响用户体验，可以允许输入，但不允许回车发送，等到收到 GA 后再发送。
@@ -139,12 +140,12 @@ func (mud *MudServer) telnetNegotiate(m IACMessage) {
 	}
 }
 
-func (mud *MudServer) Stop() {
+func (mud *Server) Stop() {
 	if mud.conn != nil {
 		mud.conn.Close()
 	}
 }
 
-func (mud *MudServer) Input() <-chan string {
+func (mud *Server) Input() <-chan string {
 	return mud.input
 }
