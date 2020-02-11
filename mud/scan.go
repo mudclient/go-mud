@@ -35,8 +35,8 @@ type Scanner struct {
 	r     ReaderWithDeadline
 	buf   bytes.Buffer
 	state ScannerStatus
-	msg   Message
-	done  bool
+	// msg   Message
+	done bool
 }
 
 type ScannerStatus int
@@ -44,7 +44,7 @@ type ScannerStatus int
 const (
 	stText ScannerStatus = iota
 	stIACCommand
-	stANSICodes
+	// stANSICodes
 )
 
 func NewScanner(r ReaderWithDeadline) *Scanner {
