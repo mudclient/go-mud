@@ -191,50 +191,35 @@ func (api *API) LuaPrint(l *lua.LState) int {
 func (api *API) LuaEcho(l *lua.LState) int {
 	text := l.ToString(1)
 
+	codes := map[string]string{
+		"$BLK$": "[black::]",
+		"$NOR$": "[-:-:-]",
+		"$RED$": "[red::]",
+		"$HIR$": "[red::b]",
+		"$GRN$": "[green::]",
+		"$HIG$": "[green::b]",
+		"$YEL$": "[yellow::]",
+		"$HIY$": "[yellow::b]",
+		"$BLU$": "[blue::]",
+		"$HIB$": "[blue::b]",
+		"$MAG$": "[darkmagenta::]",
+		"$HIM$": "[#ff00ff::]",
+		"$CYN$": "[dardcyan::]",
+		"$HIC$": "[#00ffff::]",
+		"$WHT$": "[white::]",
+		"$HIW$": "[#ffffff::]",
+		"$BNK$": "[::l]",
+		"$REV$": "[::7]",
+		"$U$":   "[::u]",
+	}
+
 	re := regexp.MustCompile(`\$(BLK|NOR|RED|HIR|GRN|HIG|YEL|HIY|BLU|HIB|MAG|HIM|CYN|HIC|WHT|HIW|BNK|REV|U)\$`)
 	text = re.ReplaceAllStringFunc(text, func(code string) string {
-		switch code {
-		case "$BLK$":
-			return "[black::]"
-		case "$NOR$":
-			return "[-:-:-]"
-		case "$RED$":
-			return "[red::]"
-		case "$HIR$":
-			return "[red::b]"
-		case "$GRN$":
-			return "[green::]"
-		case "$HIG$":
-			return "[green::b]"
-		case "$YEL$":
-			return "[yellow::]"
-		case "$HIY$":
-			return "[yellow::b]"
-		case "$BLU$":
-			return "[blue::]"
-		case "$HIB$":
-			return "[blue::b]"
-		case "$MAG$":
-			return "[darkmagenta::]"
-		case "$HIM$":
-			return "[#ff00ff::]"
-		case "$CYN$":
-			return "[dardcyan::]"
-		case "$HIC$":
-			return "[#00ffff::]"
-		case "$WHT$":
-			return "[white::]"
-		case "$HIW$":
-			return "[#ffffff::]"
-		case "$BNK$":
-			return "[::l]"
-		case "$REV$":
-			return "[::7]"
-		case "$U$":
-			return "[::u]"
-		default:
-			api.screen.Printf("Find Unknown Color Code: %s\n", code)
+		code, ok := codes[code]
+		if ok {
+			return code
 		}
+		api.screen.Printf("Find Unknown Color Code: %s\n", code)
 		return ""
 	})
 
