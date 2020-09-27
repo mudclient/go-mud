@@ -20,9 +20,6 @@
 <a href="https://goreportcard.com/report/github.com/mudclient/go-mud">
 <img alt="Go Report" src="https://goreportcard.com/badge/github.com/mudclient/go-mud">
 </a>
-<a href="https://golangci.com/r/github.com/mudclient/go-mud">
-<img alt="GolangCI Report" src="https://github.com/golangci/golangci-web/blob/master/src/assets/images/badge_a_plus_flat.svg">
-</a>
     </p>
 </p>
 
@@ -41,7 +38,7 @@ MUD 一般认为是最早的网络游戏，历史悠久，内涵丰富。在古�
 
 ## 什么是北大侠客行
 
-北大侠客行（以下称 **北侠**）于 1996 年开服，至今仍在运营，算是国内运行非常长的网络游戏了。
+北大侠客行（以下称**北侠**）于 1996 年开服，至今仍在运营，算是国内运行非常长的网络游戏了。
 而且这些年一直都有更新，实属难能可贵。
 
 基于 MUD 特有的文化，挂机在北侠也是被允许的，而在 MUD 下开发挂机程序也是一种别有风味的玩法。
@@ -112,10 +109,13 @@ GoMud 支持的平台非常丰富，限于篇幅，此处不再赘述。
 #### 通过源码安装
 
 GoMud 采用 Go 语言实现，如果你要通过源码安装，则需要自行准备 Golang 开发环境。
-推荐使用 Go 1.13 或以上的版本。Golang 安装完毕后，通过如下 `go get` 命令即可安装：
+推荐使用 Go 1.13 或以上的版本。Golang 安装完毕后，通过如下命令序列即可安装：
 
 ```
-go get -u github.com/mudclient/go-mud
+git clone https://github.com/mudclient/go-mud.git
+cd go-mud
+go generate ./...
+go build
 ```
 
 ### 启动并进入北侠
