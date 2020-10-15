@@ -5,26 +5,22 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/axgle/mahonia"
 	"github.com/flw-cn/printer"
-)
 
-var (
-	decoder mahonia.Decoder
-	encoder mahonia.Encoder
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
+	"golang.org/x/text/transform"
 )
-
-func init() {
-	decoder = mahonia.NewDecoder("GB18030")
-	encoder = mahonia.NewEncoder("GB18030")
-}
 
 type Config struct {
 	IACDebug bool
 	Host     string `flag:"H|mud.pkuxkx.net|服务器 {IP/Domain}"`
 	Port     int    `flag:"P|8080|服务器 {Port}"`
+	Encoding string `flag:"|UTF-8|服务器输出文本的 {Encoding}"`
 }
 
 type Server struct {
@@ -37,6 +33,9 @@ type Server struct {
 
 	conn  net.Conn
 	input chan string
+
+	decoder *encoding.Decoder
+	encoder *encoding.Encoder
 }
 
 func NewServer(config Config) *Server {
@@ -46,6 +45,9 @@ func NewServer(config Config) *Server {
 		server: printer.NewSimplePrinter(ioutil.Discard),
 		input:  make(chan string, 1024),
 	}
+
+	mud.decoder = resolveEncoding(config.Encoding).NewDecoder()
+	mud.encoder = resolveEncoding(config.Encoding).NewEncoder()
 
 	mud.SetOutput(mud.server)
 
@@ -72,7 +74,7 @@ func (mud *Server) Run() {
 
 	mud.screen.Println("连接成功。")
 
-	netWriter := encoder.NewWriter(mud.conn)
+	netWriter := transform.NewWriter(mud.conn, mud.encoder)
 	mud.server.SetOutput(netWriter)
 
 	scanner := NewScanner(mud.conn)
@@ -87,11 +89,11 @@ LOOP:
 		case EOF:
 			break LOOP
 		case IncompleteLine:
-			r := decoder.NewReader(m)
+			r := transform.NewReader(m, mud.decoder)
 			buf, _ := ioutil.ReadAll(r)
 			mud.input <- string(buf)
 		case Line:
-			r := decoder.NewReader(m)
+			r := transform.NewReader(m, mud.decoder)
 			buf, _ := ioutil.ReadAll(r)
 			mud.input <- string(buf)
 		case IACMessage:
@@ -148,4 +150,22 @@ func (mud *Server) Stop() {
 
 func (mud *Server) Input() <-chan string {
 	return mud.input
+}
+
+func resolveEncoding(e string) encoding.Encoding {
+	e = strings.ToUpper(e)
+	switch e {
+	case "GB2312", "HZ-GB-2312", "HZGB2312", "EUC-CN", "EUCCN":
+		return simplifiedchinese.HZGB2312
+	case "GBK", "CP936":
+		return simplifiedchinese.GBK
+	case "GB18030":
+		return simplifiedchinese.GB18030
+	case "BIG5", "BIG-5", "BIG-FIVE":
+		return traditionalchinese.Big5
+	case "UTF8", "UTF-8":
+		return encoding.Nop
+	}
+
+	return encoding.Nop
 }
