@@ -69,7 +69,7 @@ changelog:
           - Merge branch
 
 brews:
-  - github:
+  - tap:
         owner: mudclient
         name: homebrew-tap
     folder: Formula
