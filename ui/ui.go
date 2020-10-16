@@ -30,7 +30,7 @@ type UI struct {
 	historyTV  *tview.TextView
 	sepLine    *tview.TextView
 	realtimeTV *tview.TextView
-	cmdLine    *tview.InputField
+	cmdLine    *Readline
 
 	buffer    []string
 	unformed  bool
@@ -73,7 +73,9 @@ func (ui *UI) Create(title string) {
 
 	ui.ansiWriter = tview.ANSIWriter(ui.realtimeTV)
 
-	ui.cmdLine = tview.NewInputField().
+	ui.cmdLine = NewReadline()
+	ui.cmdLine.SetRepeat(true).
+		SetAutoTrim(true).
 		SetFieldBackgroundColor(tcell.ColorBlack).
 		SetLabelColor(tcell.ColorWhite).
 		SetLabel("命令: ")
@@ -128,28 +130,13 @@ func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
-	return ui.cmdLineInputCapture(event)
-}
-
-func (ui *UI) cmdLineInputCapture(event *tcell.EventKey) *tcell.EventKey {
-	key := event.Key()
-
-	if key == tcell.KeyCtrlC {
-		ui.cmdLine.SetText("")
-		return nil
-	} else if key == tcell.KeyEnter {
-		cmd := ui.cmdLine.GetText()
-		if cmd != "" {
-			ui.input <- cmd
-			ui.cmdLine.SetText("")
-		}
-		if ui.isScrolling() {
-			ui.pageEnd()
-		}
+	if key == tcell.KeyEnter {
+		cmd := ui.cmdLine.Enter()
+		ui.input <- cmd
 		return nil
 	}
 
-	return event
+	return ui.cmdLine.InputCapture(event)
 }
 
 func (ui *UI) cmdLineTextChanged(text string) {
@@ -198,6 +185,7 @@ func (ui *UI) historyInputCapture(event *tcell.EventKey) *tcell.EventKey {
 		case 'G':
 			ui.pageEnd()
 		}
+	default:
 	}
 
 	return nil
