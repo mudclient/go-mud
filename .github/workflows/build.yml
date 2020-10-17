@@ -26,5 +26,15 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Lint
-      run: docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.23.3 golangci-lint run -v ./...
+    - name: Set up Python
+      uses: actions/setup-python@v2
+
+    - name: Routine style checks
+      uses: pre-commit/action@v2.0.0
+      env:
+        SKIP: golangci-lint
+
+    - name: GolangCI-Lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.31
