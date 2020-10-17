@@ -7,6 +7,8 @@ import (
 	"github.com/rivo/tview"
 )
 
+const defaultHistorySize = 10000
+
 type Readline struct {
 	*tview.InputField
 
@@ -23,19 +25,17 @@ func NewReadline() *Readline {
 		InputField:  tview.NewInputField(),
 		history:     make([]string, 0, 32),
 		curSel:      0,
-		historySize: 10000,
+		historySize: defaultHistorySize,
 	}
 }
 
 func (r *Readline) SetRepeat(b bool) *Readline {
 	r.repeat = b
-
 	return r
 }
 
 func (r *Readline) SetAutoTrim(b bool) *Readline {
 	r.autoTrim = b
-
 	return r
 }
 

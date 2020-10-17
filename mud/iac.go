@@ -213,6 +213,7 @@ func (iac IACMessage) String() string {
 		codeName[iac.Args[0]] != "" {
 		argName = codeName[iac.Args[0]]
 	}
+
 	return fmt.Sprintf("IAC %s %s", cmdName, argName)
 }
 
@@ -224,7 +225,7 @@ func (iac IACMessage) Eq(command byte, args ...byte) bool {
 	return bytes.Equal(iac.Args, args)
 }
 
-func (iac *IACMessage) Scan(b byte) bool {
+func (iac *IACMessage) Scan(b byte) (completed bool) {
 	switch iac.state {
 	case stCmd:
 		switch b {

@@ -29,6 +29,8 @@ github.com/dzpao/tview v0.0.0-20200122091015-7e3eb050fe6b h1:EgU8jjOaqu3f1UcpWaX
 github.com/dzpao/tview v0.0.0-20200122091015-7e3eb050fe6b/go.mod h1:/rBeY22VG2QprWnEqG57IBC8biVu3i0DOIjRLc9I8H0=
 github.com/flw-cn/go-smartConfig v1.0.0 h1:9DYkseo+1lwbr5dPrf4B624kSwRj/yN58pQymAscFTc=
 github.com/flw-cn/go-smartConfig v1.0.0/go.mod h1:sKE0iGnTaJe8XcVwxFMTptN0CCiUTlPQCWSnIqjVGBk=
+github.com/flw-cn/go-smartConfig v1.1.3 h1:eyyjVFr3Jcpu/WS1J3dVE6y0dYgTVXZFvMkIqHkkTOQ=
+github.com/flw-cn/go-smartConfig v1.1.3/go.mod h1:sKE0iGnTaJe8XcVwxFMTptN0CCiUTlPQCWSnIqjVGBk=
 github.com/flw-cn/printer v0.0.0-20190906044932-ecdb12812e08 h1:jnmiuamX/MW+N63FBFuitjA87rbBto+RCEz8PsbexOo=
 github.com/flw-cn/printer v0.0.0-20190906044932-ecdb12812e08/go.mod h1:DVfmMjyMU7s2D5RBJ+fKWvQEcrQq86g9xJbpykJYBtQ=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=

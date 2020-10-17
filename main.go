@@ -8,16 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mudclient/go-mud/app"
-	"github.com/mudclient/go-mud/lua-api"
-	"github.com/mudclient/go-mud/mud"
-	"github.com/mudclient/go-mud/ui"
-
 	"github.com/flw-cn/go-smartConfig"
 	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/width"
+
+	"github.com/mudclient/go-mud/app"
+	"github.com/mudclient/go-mud/lua-api"
+	"github.com/mudclient/go-mud/mud"
+	"github.com/mudclient/go-mud/ui"
 )
 
 type ClientConfig struct {
@@ -83,8 +83,8 @@ LOOP:
 				plainLine := ansiRe.ReplaceAllString(rawLine, "")
 				if c.debug {
 					line := showLine
-					line = strings.Replace(line, "\x1b[", "<OSI>", -1)
-					line = strings.Replace(line, "\t", "<TAB>", -1)
+					line = strings.ReplaceAll(line, "\x1b[", "<OSI>")
+					line = strings.ReplaceAll(line, "\t", "<TAB>")
 					c.ui.Println(line)
 					line = tview.TranslateANSI(showLine)
 					line = tview.Escape(line)

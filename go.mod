@@ -3,7 +3,7 @@ module github.com/mudclient/go-mud
 go 1.13
 
 require (
-	github.com/flw-cn/go-smartConfig v1.0.0
+	github.com/flw-cn/go-smartConfig v1.1.3
 	github.com/flw-cn/printer v0.0.0-20190906044932-ecdb12812e08
 	github.com/gdamore/tcell v1.3.0
 	github.com/mattn/go-runewidth v0.0.4

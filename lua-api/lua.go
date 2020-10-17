@@ -14,6 +14,8 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+var errPanic = errors.New("LUA Panic")
+
 type Config struct {
 	Enable bool   `flag:"|true|是否加载 Lua 机器人"`
 	Path   string `flag:"p|lua|Lua 插件路径 {path}"`
@@ -91,7 +93,7 @@ func (api *API) Reload() error {
 	l.SetGlobal("DelMSTimer", l.NewFunction(api.LuaDelTimer))
 
 	l.Panic = func(*lua.LState) {
-		api.Panic(errors.New("LUA Panic"))
+		api.Panic(errPanic)
 	}
 
 	if err := l.DoFile(mainFile); err != nil {

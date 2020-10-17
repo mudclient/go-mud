@@ -20,6 +20,9 @@
 <a href="https://goreportcard.com/report/github.com/mudclient/go-mud">
 <img alt="Go Report" src="https://goreportcard.com/badge/github.com/mudclient/go-mud">
 </a>
+<a href="https://github.com/pre-commit/pre-commit">
+<img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit">
+</a>
     </p>
 </p>
 
@@ -187,20 +190,20 @@ Lua:
 
 ```json
 {
-    "UI": {
-        "AmbiguousWidth": "auto",
-        "HistoryLines": 100000,
-        "RTTVHeight": 10
-    },
-    "Mud": {
-        "Host": "mud.pkuxkx.net",
-        "Port": 8080,
-        "Encoding": "UTF-8"
-    },
-    "Lua": {
-        "Enable": true,
-        "Path": "lua"
-    }
+  "UI": {
+    "AmbiguousWidth": "auto",
+    "HistoryLines": 100000,
+    "RTTVHeight": 10
+  },
+  "Mud": {
+    "Host": "mud.pkuxkx.net",
+    "Port": 8080,
+    "Encoding": "UTF-8"
+  },
+  "Lua": {
+    "Enable": true,
+    "Path": "lua"
+  }
 }
 ```
 
