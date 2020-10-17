@@ -1,15 +1,15 @@
 {
-    "name": "go-mud",
-    "version": "VAR-VERSION",
-    "homepage": "https://github.com/mudclient/go-mud",
-    "maintainer": "@dzpao",
-    "description": "A mud client written in Go",
-    "arch": "aarch64",
-    "depends": [],
-    "files" :{
-        "README.md": "README.md",
-        "LICENSE": "LICENSE",
-        "dist/CHANGELOG.md": "CHANGELOG.md",
-        "dist/go-mud_linux_arm64/go-mud": "bin/go-mud"
-    }
+  "name": "go-mud",
+  "version": "VAR-VERSION",
+  "homepage": "https://github.com/mudclient/go-mud",
+  "maintainer": "@dzpao",
+  "description": "A mud client written in Go",
+  "arch": "aarch64",
+  "depends": [],
+  "files" :{
+    "README.md": "README.md",
+    "LICENSE": "LICENSE",
+    "dist/CHANGELOG.md": "CHANGELOG.md",
+    "dist/go-mud_linux_arm64/go-mud": "bin/go-mud"
+  }
 }

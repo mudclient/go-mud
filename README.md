@@ -187,20 +187,20 @@ Lua:
 
 ```json
 {
-    "UI": {
-        "AmbiguousWidth": "auto",
-        "HistoryLines": 100000,
-        "RTTVHeight": 10
-    },
-    "Mud": {
-        "Host": "mud.pkuxkx.net",
-        "Port": 8080,
-        "Encoding": "UTF-8"
-    },
-    "Lua": {
-        "Enable": true,
-        "Path": "lua"
-    }
+  "UI": {
+    "AmbiguousWidth": "auto",
+    "HistoryLines": 100000,
+    "RTTVHeight": 10
+  },
+  "Mud": {
+    "Host": "mud.pkuxkx.net",
+    "Port": 8080,
+    "Encoding": "UTF-8"
+  },
+  "Lua": {
+    "Enable": true,
+    "Path": "lua"
+  }
 }
 ```
 
