@@ -6,7 +6,7 @@
   "description": "A mud client written in Go",
   "arch": "arm",
   "depends": [],
-  "files" :{
+  "files": {
     "README.md": "README.md",
     "LICENSE": "LICENSE",
     "dist/CHANGELOG.md": "CHANGELOG.md",
