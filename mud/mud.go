@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/flw-cn/printer"
-
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"

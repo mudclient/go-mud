@@ -18,7 +18,9 @@ type CSIMessage struct {
 }
 
 type Line struct{ *bytes.Buffer }
+
 type IncompleteLine struct{ *bytes.Buffer }
+
 type EOF bool
 
 func (CSIMessage) IsMessage()     {}
@@ -88,6 +90,7 @@ func (s *Scanner) Scan() Message {
 			default:
 				line.WriteByte(b)
 			}
+
 		case stIACCommand:
 			if b == IAC {
 				return *iacCmd
@@ -102,7 +105,7 @@ func (s *Scanner) Scan() Message {
 // readByte 努力读取一个字节，并返回成功(nil)或两种错误之一：
 //     timeout:    超时
 //     io.EOF:     连接已经不可用
-// 优先从 s.buf 中读取，如果 s.buf 为空，则从 s.r 中读取
+// 优先从 s.buf 中读取，如果 s.buf 为空，则从 s.r 中读取。
 func (s *Scanner) readByte() (byte, error) {
 	b, err := s.buf.ReadByte()
 	if err != io.EOF {
