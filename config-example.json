@@ -6,7 +6,8 @@
   },
   "Mud": {
     "Host": "mud.pkuxkx.net",
-    "Port": 8080
+    "Port": 8080,
+    "Encoding": "UTF-8"
   },
   "Lua": {
     "Enable": true,
