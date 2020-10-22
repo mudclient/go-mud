@@ -157,7 +157,7 @@ Flags:
       --ui.rttvheight int          历史查看模式下实时文本区域高度 (default 10)
   -H, --mud.host IP/Domain         服务器 IP/Domain (default "mud.pkuxkx.net")
   -P, --mud.port Port              服务器 Port (default 8080)
-      --mud.encoding Encoding      服务器输出文本的 Encoding (default "UTF-8")
+      --mud.encodings Encodings    服务器的 Encodings，允许指定多个，用逗号分隔 (default "UTF-8,GB18030,GBK,GB2312")
       --lua.enable                 是否加载 Lua 机器人 (default true)
   -p, --lua.path path              Lua 插件路径 path (default "lua")
 ```
@@ -178,7 +178,7 @@ UI:
 MUD:
   Host: mud.pkuxkx.net
   Port: 8080
-  Encoding: UTF-8
+  Encodings: UTF-8,GB18030,GBK,GB2312
 Lua:
   Enable: true
   Path: lua
@@ -198,7 +198,7 @@ Lua:
   "Mud": {
     "Host": "mud.pkuxkx.net",
     "Port": 8080,
-    "Encoding": "UTF-8"
+    "Encodings": "UTF-8,GB18030,GBK,GB2312"
   },
   "Lua": {
     "Enable": true,
