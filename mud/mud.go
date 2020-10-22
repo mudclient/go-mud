@@ -2,11 +2,13 @@ package mud
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/flw-cn/printer"
 	"golang.org/x/text/encoding"
@@ -16,10 +18,10 @@ import (
 )
 
 type Config struct {
-	IACDebug bool
-	Host     string `flag:"H|mud.pkuxkx.net|服务器 {IP/Domain}"`
-	Port     int    `flag:"P|8080|服务器 {Port}"`
-	Encoding string `flag:"|UTF-8|服务器输出文本的 {Encoding}"`
+	IACDebug  bool
+	Host      string `flag:"H|mud.pkuxkx.net|服务器 {IP/Domain}"`
+	Port      int    `flag:"P|8080|服务器 {Port}"`
+	Encodings string `flag:"|UTF-8,GB18030,GBK,GB2312|服务器的 {Encodings}，允许指定多个，用逗号分隔"`
 }
 
 type Server struct {
@@ -33,8 +35,9 @@ type Server struct {
 	conn  net.Conn
 	input chan string
 
-	decoder *encoding.Decoder
-	encoder *encoding.Encoder
+	encodings []encoding.Encoding
+	decoder   *encoding.Decoder
+	encoder   *encoding.Encoder
 }
 
 func NewServer(config Config) *Server {
@@ -45,8 +48,17 @@ func NewServer(config Config) *Server {
 		input:  make(chan string, 1024),
 	}
 
-	mud.decoder = resolveEncoding(config.Encoding).NewDecoder()
-	mud.encoder = resolveEncoding(config.Encoding).NewEncoder()
+	encodings := strings.Split(config.Encodings, ",")
+	for _, enc := range encodings {
+		mud.encodings = append(mud.encodings, resolveEncoding(enc))
+	}
+
+	if len(mud.encodings) == 0 {
+		mud.encodings = []encoding.Encoding{encoding.Nop}
+	}
+
+	mud.decoder = mud.encodings[0].NewDecoder()
+	mud.encoder = mud.encodings[0].NewEncoder()
 
 	mud.SetOutput(mud.server)
 
@@ -88,13 +100,11 @@ LOOP:
 		case EOF:
 			break LOOP
 		case IncompleteLine:
-			r := transform.NewReader(m, mud.decoder)
-			buf, _ := ioutil.ReadAll(r)
-			mud.input <- string(buf)
+			str := mud.tryDecode(m)
+			mud.input <- str
 		case Line:
-			r := transform.NewReader(m, mud.decoder)
-			buf, _ := ioutil.ReadAll(r)
-			mud.input <- string(buf)
+			str := mud.tryDecode(m)
+			mud.input <- str
 		case IACMessage:
 			mud.telnetNegotiate(m)
 		}
@@ -106,6 +116,27 @@ LOOP:
 	mud.screen.Println("TODO: 这里需要实现自动重连。")
 
 	close(mud.input)
+}
+
+func (mud *Server) tryDecode(r io.Reader) string {
+	rawBuf, _ := ioutil.ReadAll(r)
+
+	buf, _ := mud.decoder.Bytes(rawBuf)
+	if utf8.Valid(buf) {
+		return string(buf)
+	}
+
+	for _, enc := range mud.encodings {
+		decoder := enc.NewDecoder()
+		buf, _ := decoder.Bytes(rawBuf)
+		if utf8.Valid(buf) {
+			mud.decoder = decoder
+			mud.encoder = enc.NewEncoder()
+			return string(buf)
+		}
+	}
+
+	return ""
 }
 
 func (mud *Server) telnetNegotiate(m IACMessage) {
