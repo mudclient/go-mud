@@ -1,6 +1,7 @@
 package mud
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/flw-cn/printer"
@@ -122,21 +124,22 @@ func (mud *Server) tryDecode(r io.Reader) string {
 	rawBuf, _ := ioutil.ReadAll(r)
 
 	buf, _ := mud.decoder.Bytes(rawBuf)
-	if utf8.Valid(buf) {
+	if utf8.Valid(buf) && !bytes.ContainsRune(buf, unicode.ReplacementChar) {
 		return string(buf)
 	}
 
 	for _, enc := range mud.encodings {
 		decoder := enc.NewDecoder()
 		buf, _ := decoder.Bytes(rawBuf)
-		if utf8.Valid(buf) {
+		if utf8.Valid(buf) && !bytes.ContainsRune(buf, unicode.ReplacementChar) {
 			mud.decoder = decoder
 			mud.encoder = enc.NewEncoder()
 			return string(buf)
 		}
 	}
 
-	return ""
+	buf, _ = mud.decoder.Bytes(rawBuf)
+	return string(buf)
 }
 
 func (mud *Server) telnetNegotiate(m IACMessage) {
