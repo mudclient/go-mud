@@ -46,10 +46,7 @@ func (api *API) Init() {
 		return
 	}
 
-	if err := api.Reload(); err != nil {
-		api.screen.Println("Lua 初始化失败。")
-		return
-	}
+	_ = api.Reload()
 }
 
 func (api *API) SetScreen(w printer.Printer) {
@@ -63,7 +60,7 @@ func (api *API) SetMud(w io.Writer) {
 func (api *API) Reload() error {
 	mainFile := path.Join(api.config.Path, "main.lua")
 	if _, err := os.Open(mainFile); err != nil {
-		api.screen.Printf("Load error: %s\n", err)
+		api.screen.Printf("Load error: %v\n", err)
 		api.screen.Println("无法打开 lua 主程序，请检查你的配置。")
 		return err
 	}
@@ -80,6 +77,31 @@ func (api *API) Reload() error {
 
 	api.lstate = lua.NewState()
 
+	// 为 Lua 环境提供 API
+	api.register()
+
+	l := api.lstate
+
+	l.Panic = func(*lua.LState) {
+		api.Panic(errPanic)
+	}
+
+	if err := l.DoFile(mainFile); err != nil {
+		l.Close()
+		api.screen.Printf("Lua 初始化失败：%v\n", err)
+		api.lstate = nil
+		return err
+	}
+
+	// 和 Lua 环境中的钩子相连接
+	api.hookOn()
+
+	api.screen.Println("Lua 环境初始化完成。")
+
+	return nil
+}
+
+func (api *API) register() {
 	l := api.lstate
 
 	l.SetGlobal("RegEx", l.NewFunction(api.LuaRegEx))
@@ -91,36 +113,36 @@ func (api *API) Reload() error {
 	l.SetGlobal("AddMSTimer", l.NewFunction(api.LuaAddTimer))
 	l.SetGlobal("DelTimer", l.NewFunction(api.LuaDelTimer))
 	l.SetGlobal("DelMSTimer", l.NewFunction(api.LuaDelTimer))
+}
 
-	l.Panic = func(*lua.LState) {
-		api.Panic(errPanic)
+func (api *API) hookOn() {
+	l := api.lstate
+
+	if v := l.GetGlobal("OnReceive"); v.Type() == lua.LTFunction {
+		api.onReceive = lua.P{
+			Fn:      v,
+			NRet:    0,
+			Protect: true,
+		}
+	} else {
+		api.screen.Println("Lua 环境中未定义 OnReceive 函数，将无法接收游戏数据。")
 	}
 
-	if err := l.DoFile(mainFile); err != nil {
-		l.Close()
-		api.lstate = nil
-		return err
+	if v := l.GetGlobal("OnSend"); v.Type() == lua.LTFunction {
+		api.onSend = lua.P{
+			Fn:      v,
+			NRet:    1,
+			Protect: true,
+		}
+	} else {
+		api.screen.Println("Lua 环境中未定义 OnSend 函数，将无法获知向游戏发送的数据。")
 	}
-
-	api.onReceive = lua.P{
-		Fn:      l.GetGlobal("OnReceive"),
-		NRet:    0,
-		Protect: true,
-	}
-
-	api.onSend = lua.P{
-		Fn:      l.GetGlobal("OnSend"),
-		NRet:    1,
-		Protect: true,
-	}
-
-	api.screen.Println("Lua 环境初始化完成。")
-
-	return nil
 }
 
 func (api *API) OnReceive(raw, input string) {
-	if api.lstate == nil {
+	if api.lstate == nil ||
+		api.onReceive.Fn == nil ||
+		api.onReceive.Fn.Type() != lua.LTFunction {
 		return
 	}
 
@@ -132,7 +154,9 @@ func (api *API) OnReceive(raw, input string) {
 }
 
 func (api *API) OnSend(cmd string) bool {
-	if api.lstate == nil {
+	if api.lstate == nil ||
+		api.onSend.Fn == nil ||
+		api.onSend.Fn.Type() != lua.LTFunction {
 		return true
 	}
 
@@ -149,7 +173,7 @@ func (api *API) OnSend(cmd string) bool {
 }
 
 func (api *API) Panic(err error) {
-	api.screen.Printf("Lua error: [%v]\n", err)
+	api.screen.Printf("Lua error: %v\n", err)
 }
 
 func (api *API) LuaRegEx(l *lua.LState) int {
@@ -307,6 +331,6 @@ type Timer struct {
 func (t *Timer) Emit(l *API) {
 	err := l.lstate.DoString(`call_timer_actions("` + t.id + `")`)
 	if err != nil {
-		l.screen.Printf("Lua Error: %s\n", err)
+		l.screen.Printf("Lua Error: %v\n", err)
 	}
 }
