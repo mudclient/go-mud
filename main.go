@@ -114,8 +114,7 @@ func (c *Client) DoCmd(cmd string) {
 		c.ui.Print(app.VersionDetail())
 		return
 	case "/reload-lua":
-		err := c.lua.Reload()
-		c.ui.Printf("Error: %s\n", err)
+		_ = c.lua.Reload()
 		return
 	case "/debug":
 		c.debug = !c.debug
