@@ -2,7 +2,9 @@
   "UI": {
     "AmbiguousWidth": "auto",
     "HistoryLines": 100000,
-    "RTTVHeight": 10
+    "RTTVHeight": 10,
+    "Split":false,
+    "Separator":";"
   },
   "Mud": {
     "Host": "mud.pkuxkx.net",

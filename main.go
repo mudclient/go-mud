@@ -107,7 +107,7 @@ LOOP:
 
 func (c *Client) DoCmd(cmd string) {
 	switch cmd {
-	case "exit", "quit":
+	case "/exit":
 		c.quit <- true
 		return
 	case "/version":

@@ -18,6 +18,10 @@ type Readline struct {
 
 	repeat   bool
 	autoTrim bool
+
+	cmds      []string
+	split     bool
+	separator string
 }
 
 func NewReadline() *Readline {
@@ -27,6 +31,12 @@ func NewReadline() *Readline {
 		curSel:      0,
 		historySize: defaultHistorySize,
 	}
+}
+
+func (r *Readline) SetSeparator(s string) *Readline {
+	r.split = true
+	r.separator = s
+	return r
 }
 
 func (r *Readline) SetRepeat(b bool) *Readline {
@@ -69,13 +79,23 @@ func (r *Readline) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 func (r *Readline) Enter() string {
 	text := r.InputField.GetText()
 
+	r.cmds = nil
+
 	if text != "" && r.autoTrim {
 		text = strings.TrimSpace(text)
 		// 如果 trim 之后变成了空串，则至少保留一个空格，以免用户发不出空格
 		if text == "" {
 			text = " "
+		}else if r.split && "" != r.separator {
+			//命令分割
+			r.cmds = strings.Split(text,r.separator)
+			if len(r.cmds) < 2 {
+				r.cmds = nil
+			}
 		}
 	}
+
+
 
 	last := ""
 	if len(r.history) > 0 {
