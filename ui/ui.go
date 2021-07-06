@@ -16,6 +16,8 @@ type Config struct {
 	AmbiguousWidth string `flag:"|auto|二义性字符宽度，可选值: auto/single/double/space"`
 	HistoryLines   int    `flag:"|100000|历史记录保留行数"`
 	RTTVHeight     int    `flag:"|10|历史查看模式下实时文本区域高度"`
+	Split          bool   `flag:"|false|分割多个命令"`
+	Separator      string `flag:"|;|自定义分隔符"`
 }
 
 type UI struct {
@@ -74,6 +76,11 @@ func (ui *UI) Create(title string) {
 	ui.ansiWriter = tview.ANSIWriter(ui.realtimeTV)
 
 	ui.cmdLine = NewReadline()
+
+	if ui.config.Split {
+		ui.cmdLine.SetSeparator(ui.config.Separator)
+	}
+
 	ui.cmdLine.SetRepeat(true).
 		SetAutoTrim(true).
 		SetFieldBackgroundColor(tcell.ColorBlack).
@@ -132,7 +139,13 @@ func (ui *UI) InputCapture(event *tcell.EventKey) *tcell.EventKey {
 
 	if key == tcell.KeyEnter {
 		cmd := ui.cmdLine.Enter()
-		ui.input <- cmd
+		if ui.config.Split && nil != ui.cmdLine.cmds {
+			for _,cmd := range ui.cmdLine.cmds{
+				ui.input <- cmd
+			}
+		}else{
+			ui.input <- cmd
+		}
 		return nil
 	}
 
